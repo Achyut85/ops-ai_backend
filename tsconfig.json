@@ -4,14 +4,17 @@
     // File Layout
     "rootDir": "./src",
     "outDir": "./dist",
+  
 
     // Environment Settings
     // See also https://aka.ms/tsconfig/module
-    "module": "nodenext",
+    "module": "preserve",
     "target": "esnext",
     // For nodejs:
     "lib": ["esnext"],
-    "types": ["node"],
+    "types": [
+      "node"
+    ],
     // and npm install -D @types/node
 
     // Other Outputs
@@ -34,5 +37,8 @@
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",
     "skipLibCheck": true,
-  }
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+  },
+ "include": ["src/**/*"]
 }

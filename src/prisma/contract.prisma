@@ -1,0 +1,58 @@
+// use prisma-next
+
+model Organization {
+  id        Int               @id @default(autoincrement())
+  name      String
+  createdAt TimestamptzString @default(now())
+  updatedAt temporal.updatedAtString()
+
+  users     User[]
+  tickets   Ticket[]
+}
+
+model User {
+  id             Int               @id @default(autoincrement())
+  email          String            @unique
+  username       String?
+  name           String?
+
+  organizationId Int
+  organization   Organization      @relation(fields: [organizationId], references: [id])
+
+  assignedTickets Ticket[]
+  ticketHistory   TicketHistory[]
+
+  createdAt      TimestamptzString @default(now())
+  updatedAt      temporal.updatedAtString()
+}
+
+model Ticket {
+  id             Int               @id @default(autoincrement())
+  title          String
+  description    String?
+  status         String
+
+  organizationId Int
+  organization   Organization      @relation(fields: [organizationId], references: [id])
+
+  assignedUserId Int?
+  assignedUser   User?             @relation(fields: [assignedUserId], references: [id])
+
+  history        TicketHistory[]
+
+  createdAt      TimestamptzString @default(now())
+  updatedAt      temporal.updatedAtString()
+}
+
+model TicketHistory {
+  id        Int               @id @default(autoincrement())
+
+  ticketId  Int
+  ticket    Ticket            @relation(fields: [ticketId], references: [id])
+
+  userId    Int
+  user      User              @relation(fields: [userId], references: [id])
+
+  status    String
+  createdAt TimestamptzString @default(now())
+}
