@@ -1,8 +1,8 @@
 import { Router } from "express";
+import ticketRoutes from "./ticket.routes.js";
+
 const router = Router();
 
-router.get("/", (req, res) => {
-  res.send("Hello, World!");
-});
+router.use("/tickets", ticketRoutes);
 
 export default router;

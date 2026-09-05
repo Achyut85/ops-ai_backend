@@ -39,7 +39,7 @@ model Ticket {
   assignedUser   User?             @relation(fields: [assignedUserId], references: [id])
 
   history        TicketHistory[]
-
+  deletedAt      TimestamptzString?
   createdAt      TimestamptzString @default(now())
   updatedAt      temporal.updatedAtString()
 }
