@@ -2,10 +2,49 @@ import { Router } from "express";
 import { db } from "../prisma/db.js";
 
 const router = Router();
+router.get("/", async (req, res) => {
+  // Temporary until authentication
+  const organizationId = 1;
+
+  const assignedUserId = req.query.assignedUserId
+    ? parseInt(req.query.assignedUserId as string)
+    : undefined;
+
+  const status = req.query.status as string | undefined;
+
+  if (assignedUserId !== undefined && isNaN(assignedUserId)) {
+    return res.status(400).json({
+      message: "Invalid assignedUserId",
+    });
+  }
+
+  try {
+    const tickets = await db.orm.public.Ticket
+      .where({
+        organizationId,
+        deletedAt: null,
+        ...(assignedUserId !== undefined && { assignedUserId }),
+        ...(status !== undefined && { status }),
+      })
+      .all();
+
+    return res.json(tickets);
+
+  } catch (error) {
+    console.error("Failed to fetch tickets:", error);
+
+    return res.status(500).json({
+      message: "Failed to fetch tickets",
+    });
+  }
+});
 
 router.get("/:_id", async (req, res) => {
   const ticket = await db.orm.public.Ticket
-    .where({ id: parseInt(req.params._id) })
+    .where({
+      id: parseInt(req.params._id),
+      deletedAt: null,
+    })
     .first();
 
   if (!ticket) {
@@ -14,7 +53,6 @@ router.get("/:_id", async (req, res) => {
 
   res.json(ticket);
 });
-
 
 router.post("/", async (req, res) => {
   const ticket = await db.orm.public.Ticket.create({
@@ -51,8 +89,11 @@ router.patch("/:_id", async (req, res) => {
     const result = await db.transaction(async (tx) => {
       // Find current ticket
       const ticket = await tx.orm.public.Ticket
-        .where({ id: ticketId })
-        .first();
+        .where({
+          id: ticketId,
+          deletedAt: null,
+        })
+        .first();;
 
       // Ticket does not exist
       if (!ticket) {
@@ -112,6 +153,29 @@ router.patch("/:_id", async (req, res) => {
       message: "Failed to update ticket",
     });
   }
+});
+
+router.delete("/:_id", async (req, res) => {
+  const ticketId = parseInt(req.params._id);
+
+  const deletedTicket = await db.orm.public.Ticket
+    .where({
+      id: ticketId,
+      deletedAt: null,
+    })
+    .update({
+      deletedAt: new Date().toISOString(),
+    });
+
+  if (!deletedTicket) {
+    return res.status(404).json({
+      message: "Ticket not found",
+    });
+  }
+
+  return res.json({
+    message: "Ticket deleted successfully",
+  });
 });
 
 export default router;
