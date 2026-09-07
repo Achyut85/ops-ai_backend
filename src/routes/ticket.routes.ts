@@ -1,70 +1,12 @@
 import { Router } from "express";
 import { db } from "../prisma/db.js";
+import { createTicketController, getTicketByIdController, getTicketsController ,  } from "../controllers/ticket.controller.js";
+
 
 const router = Router();
-router.get("/", async (req, res) => {
-  // Temporary until authentication
-  const organizationId = 1;
-
-  const assignedUserId = req.query.assignedUserId
-    ? parseInt(req.query.assignedUserId as string)
-    : undefined;
-
-  const status = req.query.status as string | undefined;
-
-  if (assignedUserId !== undefined && isNaN(assignedUserId)) {
-    return res.status(400).json({
-      message: "Invalid assignedUserId",
-    });
-  }
-
-  try {
-    const tickets = await db.orm.public.Ticket
-      .where({
-        organizationId,
-        deletedAt: null,
-        ...(assignedUserId !== undefined && { assignedUserId }),
-        ...(status !== undefined && { status }),
-      })
-      .all();
-
-    return res.json(tickets);
-
-  } catch (error) {
-    console.error("Failed to fetch tickets:", error);
-
-    return res.status(500).json({
-      message: "Failed to fetch tickets",
-    });
-  }
-});
-
-router.get("/:_id", async (req, res) => {
-  const ticket = await db.orm.public.Ticket
-    .where({
-      id: parseInt(req.params._id),
-      deletedAt: null,
-    })
-    .first();
-
-  if (!ticket) {
-    return res.status(404).json({ message: "Ticket not found" });
-  }
-
-  res.json(ticket);
-});
-
-router.post("/", async (req, res) => {
-  const ticket = await db.orm.public.Ticket.create({
-    title: req.body.title,
-    description: req.body.description,
-    status: req.body.status,
-    organizationId: req.body.organizationId,
-    assignedUserId: req.body.assignedUserId,
-  });
-
-  res.status(201).json(ticket);
-});
+router.get("/", getTicketsController);
+router.post("/", createTicketController);
+router.get("/:_id", getTicketByIdController);
 
 router.patch("/:_id", async (req, res) => {
   const validStatuses = [

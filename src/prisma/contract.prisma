@@ -1,5 +1,3 @@
-// use prisma-next
-
 model Organization {
   id        Int               @id @default(autoincrement())
   name      String
