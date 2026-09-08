@@ -3,6 +3,8 @@ import { db } from "../prisma/db.js";
 type TransactionClient =
   Parameters<Parameters<typeof db.transaction>[0]>[0];
 
+
+// GET /tickets
 export const findTickets = async (
   organizationId: number,
   assignedUserId?: number,
@@ -19,6 +21,20 @@ export const findTickets = async (
 };
 
 
+// GET /tickets/:id
+export const findTicketById = async (
+  ticketId: number,
+) => {
+  return db.orm.public.Ticket
+    .where({
+      id: ticketId,
+      deletedAt: null,
+    })
+    .first();
+};
+
+
+// POST /tickets
 export const createTicket = async (data: {
   title: string;
   description?: string;
@@ -36,9 +52,13 @@ export const createTicket = async (data: {
 };
 
 
-
-export const findTicketById = async (ticketId: number) => {
-  return db.orm.public.Ticket
+// PATCH /tickets/:id
+// Find ticket inside transaction
+export const findTicketByIdTx = async (
+  tx: TransactionClient,
+  ticketId: number,
+) => {
+  return tx.orm.public.Ticket
     .where({
       id: ticketId,
       deletedAt: null,
@@ -46,6 +66,9 @@ export const findTicketById = async (ticketId: number) => {
     .first();
 };
 
+
+// PATCH /tickets/:id
+// Update ticket status inside transaction
 export const updateTicketStatus = async (
   tx: TransactionClient,
   ticketId: number,
@@ -54,8 +77,51 @@ export const updateTicketStatus = async (
   return tx.orm.public.Ticket
     .where({
       id: ticketId,
+      deletedAt: null,
     })
     .update({
       status,
     });
+};
+
+
+// PATCH /tickets/:id
+// Create history inside transaction
+export const createTicketHistory = async (
+  tx: TransactionClient,
+  ticketId: number,
+  userId: number,
+  status: string,
+) => {
+  return tx.orm.public.TicketHistory.create({
+    ticketId,
+    userId,
+    status,
+  });
+};
+
+
+// DELETE /tickets/:id
+export const softDeleteTicket = async (
+  ticketId: number,
+) => {
+  return db.orm.public.Ticket
+    .where({
+      id: ticketId,
+      deletedAt: null,
+    })
+    .update({
+      deletedAt: new Date().toISOString(),
+    });
+};
+
+
+export const findTicketHistory = async (
+  ticketId: number,
+) => {
+  return db.orm.public.TicketHistory
+    .where({
+      ticketId,
+    })
+    .all();
 };
