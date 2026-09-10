@@ -17,9 +17,12 @@ export const getUserById = async (
 };
 
 export const createNewUser = async (data: {
-  email: string;
-  username?: string;
+  email?: string;
+  username: string;
   name?: string;
+  passwordHash: string;
+  role: string;
+  status: string;
   organizationId: number;
 }) => {
   return createUser(data);

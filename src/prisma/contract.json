@@ -8,6 +8,10 @@
       "model": "Organization",
       "namespace": "public"
     },
+    "organizationAccount": {
+      "model": "OrganizationAccount",
+      "namespace": "public"
+    },
     "ticket": {
       "model": "Ticket",
       "namespace": "public"
@@ -57,6 +61,21 @@
               }
             },
             "relations": {
+              "account": {
+                "cardinality": "1:1",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "organizationId"
+                  ]
+                },
+                "to": {
+                  "model": "OrganizationAccount",
+                  "namespace": "public"
+                }
+              },
               "tickets": {
                 "cardinality": "1:N",
                 "on": {
@@ -105,6 +124,93 @@
               },
               "namespaceId": "public",
               "table": "organization"
+            }
+          },
+          "OrganizationAccount": {
+            "fields": {
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "email": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "organizationId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "passwordHash": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "organization": {
+                "cardinality": "N:1",
+                "on": {
+                  "localFields": [
+                    "organizationId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Organization",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "email": {
+                  "column": "email"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "organizationId": {
+                  "column": "organizationId"
+                },
+                "passwordHash": {
+                  "column": "passwordHash"
+                },
+                "updatedAt": {
+                  "column": "updatedAt"
+                }
+              },
+              "namespaceId": "public",
+              "table": "organizationAccount"
             }
           },
           "Ticket": {
@@ -356,7 +462,7 @@
                 }
               },
               "email": {
-                "nullable": false,
+                "nullable": true,
                 "type": {
                   "codecId": "pg/text@1",
                   "kind": "scalar"
@@ -383,6 +489,27 @@
                   "kind": "scalar"
                 }
               },
+              "passwordHash": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "role": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "status": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "updatedAt": {
                 "nullable": false,
                 "type": {
@@ -391,7 +518,7 @@
                 }
               },
               "username": {
-                "nullable": true,
+                "nullable": false,
                 "type": {
                   "codecId": "pg/text@1",
                   "kind": "scalar"
@@ -462,6 +589,15 @@
                 "organizationId": {
                   "column": "organizationId"
                 },
+                "passwordHash": {
+                  "column": "passwordHash"
+                },
+                "role": {
+                  "column": "role"
+                },
+                "status": {
+                  "column": "status"
+                },
                 "updatedAt": {
                   "column": "updatedAt"
                 },
@@ -521,6 +657,84 @@
                 ]
               },
               "uniques": []
+            },
+            "organizationAccount": {
+              "columns": {
+                "createdAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "email": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "organizationId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "passwordHash": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "updatedAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "source": {
+                    "columns": [
+                      "organizationId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "organizationAccount"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "organization"
+                  }
+                }
+              ],
+              "indexes": [],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "email"
+                  ]
+                },
+                {
+                  "columns": [
+                    "organizationId"
+                  ]
+                }
+              ]
             },
             "ticket": {
               "columns": {
@@ -746,7 +960,7 @@
                 "email": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
-                  "nullable": false
+                  "nullable": true
                 },
                 "id": {
                   "codecId": "pg/int4@1",
@@ -767,6 +981,21 @@
                   "nativeType": "int4",
                   "nullable": false
                 },
+                "passwordHash": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "role": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "status": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
                 "updatedAt": {
                   "codecId": "pg/timestamptz-string@1",
                   "nativeType": "timestamptz",
@@ -775,7 +1004,7 @@
                 "username": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
-                  "nullable": true
+                  "nullable": false
                 }
               },
               "foreignKeys": [
@@ -814,7 +1043,8 @@
               "uniques": [
                 {
                   "columns": [
-                    "email"
+                    "organizationId",
+                    "username"
                   ]
                 }
               ]
@@ -825,10 +1055,10 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "0c8d3b31ebfe44bff636eca53ae812a0628b9a04e035221e27607de6f6b5733f"
+    "storageHash": "fc3ec6c492ab412e07e519bdcdc4b49973e1ac59766b5145a6ed645b83479fd8"
   },
   "execution": {
-    "executionHash": "7c16f268349c05e94f90a3f599e487d5c6f73a91b17548e3aea55a9fe735b85a",
+    "executionHash": "24941c1c510e186fb4381dc5525fa04c1df2ab75551ceb439658b166487381da",
     "mutations": {
       "defaults": [
         {
@@ -844,6 +1074,21 @@
             "column": "updatedAt",
             "namespace": "public",
             "table": "organization"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "timestampNow",
+            "kind": "generator"
+          },
+          "onUpdate": {
+            "id": "timestampNow",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "updatedAt",
+            "namespace": "public",
+            "table": "organizationAccount"
           }
         },
         {

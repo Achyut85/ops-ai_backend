@@ -23,15 +23,21 @@ export const findUserById = async (
 
 
 export const createUser = async (data: {
-  email: string;
-  username?: string;
+  email?: string;
+  username: string;
   name?: string;
+  passwordHash: string;
+  role: string;
+  status: string;
   organizationId: number;
 }) => {
   return db.orm.public.User.create({
-    email: data.email,
-    username: data.username ?? null,
+    email: data.email ?? null,
+    username: data.username,
     name: data.name ?? null,
+    passwordHash: data.passwordHash,
+    role: data.role,
+    status: data.status,
     organizationId: data.organizationId,
   });
 };

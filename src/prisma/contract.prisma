@@ -1,27 +1,48 @@
+// use prisma-next
+
 model Organization {
   id        Int               @id @default(autoincrement())
   name      String
-  createdAt TimestamptzString @default(now())
-  updatedAt temporal.updatedAtString()
 
+  account   OrganizationAccount?
   users     User[]
   tickets   Ticket[]
+
+  createdAt TimestamptzString @default(now())
+  updatedAt temporal.updatedAtString()
+}
+
+model OrganizationAccount {
+  id             Int               @id @default(autoincrement())
+  email          String            @unique
+  passwordHash   String
+
+  organizationId Int               @unique
+  organization   Organization      @relation(fields: [organizationId], references: [id])
+
+  createdAt      TimestamptzString @default(now())
+  updatedAt      temporal.updatedAtString()
 }
 
 model User {
-  id             Int               @id @default(autoincrement())
-  email          String            @unique
-  username       String?
-  name           String?
+  id              Int               @id @default(autoincrement())
+  username        String
+  passwordHash    String
+  email           String?
+  name            String?
+  role            String
+  status          String
 
-  organizationId Int
-  organization   Organization      @relation(fields: [organizationId], references: [id])
+  organizationId  Int
+  organization    Organization      @relation(fields: [organizationId], references: [id])
 
   assignedTickets Ticket[]
   ticketHistory   TicketHistory[]
 
-  createdAt      TimestamptzString @default(now())
-  updatedAt      temporal.updatedAtString()
+  createdAt       TimestamptzString @default(now())
+  updatedAt       temporal.updatedAtString()
+
+  @@unique([organizationId, username])
 }
 
 model Ticket {
@@ -37,6 +58,7 @@ model Ticket {
   assignedUser   User?             @relation(fields: [assignedUserId], references: [id])
 
   history        TicketHistory[]
+
   deletedAt      TimestamptzString?
   createdAt      TimestamptzString @default(now())
   updatedAt      temporal.updatedAtString()
@@ -46,7 +68,7 @@ model TicketHistory {
   id        Int               @id @default(autoincrement())
 
   ticketId  Int
-  ticket    Ticket            @relation(fields: [ticketId], references: [id])
+  ticket    Ticket            @relation(fields: [ticketId],references: [id],)
 
   userId    Int
   user      User              @relation(fields: [userId], references: [id])

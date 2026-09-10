@@ -14,41 +14,47 @@ describe("User API", () => {
       expect(user.organizationId).toBe(1);
     }
   });
-});
 
+  it("should get an existing user", async () => {
+    const response = await request(app)
+      .get("/api/v1/users/1");
 
-it("should get an existing user", async () => {
-  const response = await request(app)
-    .get("/api/v1/users/1");
-
-  expect(response.status).toBe(200);
-  expect(response.body.id).toBe(1);
-});
-
-it("should return 404 for a non-existing user", async () => {
-  const response = await request(app)
-    .get("/api/v1/users/999999");
-
-  expect(response.status).toBe(404);
-  expect(response.body).toEqual({
-    message: "User not found",
+    expect(response.status).toBe(200);
+    expect(response.body.id).toBe(1);
   });
-});
 
+  it("should return 404 for a non-existing user", async () => {
+    const response = await request(app)
+      .get("/api/v1/users/999999");
 
-it("should create a user", async () => {
-  const response = await request(app)
-    .post("/api/v1/users")
-    .send({
-      email: "testuser@example.com",
-      username: "testuser",
-      name: "Test User",
-      organizationId: 1,
+    expect(response.status).toBe(404);
+    expect(response.body).toEqual({
+      message: "User not found",
     });
+  });
 
-  expect(response.status).toBe(201);
-  expect(response.body.id).toBeTypeOf("number");
-  expect(response.body.email).toBe("testuser@example.com");
-  expect(response.body.username).toBe("testuser");
-  expect(response.body.organizationId).toBe(1);
+  it("should create a user", async () => {
+    const username = `testuser_${Date.now()}`;
+    const email = `${username}@example.com`;
+
+    const response = await request(app)
+      .post("/api/v1/users")
+      .send({
+        email,
+        username,
+        name: "Test User",
+        passwordHash: "dummy-hashed-password",
+        role: "TICKET_HANDLER",
+        status: "ACTIVE",
+        organizationId: 1,
+      });
+
+    expect(response.status).toBe(201);
+    expect(response.body.id).toBeTypeOf("number");
+    expect(response.body.email).toBe(email);
+    expect(response.body.username).toBe(username);
+    expect(response.body.organizationId).toBe(1);
+    expect(response.body.role).toBe("TICKET_HANDLER");
+    expect(response.body.status).toBe("ACTIVE");
+  });
 });

@@ -61,6 +61,9 @@ export const createUserController = async (
       email: req.body.email,
       username: req.body.username,
       name: req.body.name,
+      passwordHash: req.body.passwordHash,
+      role: req.body.role,
+      status: req.body.status,
       organizationId: req.body.organizationId,
     });
 
