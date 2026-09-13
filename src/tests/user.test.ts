@@ -37,17 +37,17 @@ describe("User API", () => {
     const username = `testuser_${Date.now()}`;
     const email = `${username}@example.com`;
 
-    const response = await request(app)
-      .post("/api/v1/users")
-      .send({
-        email,
-        username,
-        name: "Test User",
-        passwordHash: "dummy-hashed-password",
-        role: "TICKET_HANDLER",
-        status: "ACTIVE",
-        organizationId: 1,
-      });
+const response = await request(app)
+  .post("/api/v1/users")
+  .send({
+    email,
+    username,
+    name: "Test User",
+    password: "TestPassword123!",
+    role: "TICKET_HANDLER",
+    status: "ACTIVE",
+    organizationId: 1,
+  });;
 
     expect(response.status).toBe(201);
     expect(response.body.id).toBeTypeOf("number");
@@ -56,5 +56,30 @@ describe("User API", () => {
     expect(response.body.organizationId).toBe(1);
     expect(response.body.role).toBe("TICKET_HANDLER");
     expect(response.body.status).toBe("ACTIVE");
+    expect(response.body.passwordHash).toBeUndefined();
   });
+});
+
+it("should not allow duplicate username in the same organization", async () => {
+  const username = `duplicate_${Date.now()}`;
+
+  const userData = {
+    username,
+    password: "TestPassword123!",
+    role: "TICKET_HANDLER",
+    status: "ACTIVE",
+    organizationId: 1,
+  };
+
+  const firstResponse = await request(app)
+    .post("/api/v1/users")
+    .send(userData);
+
+  expect(firstResponse.status).toBe(201);
+
+  const secondResponse = await request(app)
+    .post("/api/v1/users")
+    .send(userData);
+
+  expect(secondResponse.status).toBe(500);
 });

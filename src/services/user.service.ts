@@ -3,6 +3,8 @@ import {
   findUserById,
   findUsers,
 } from "../repositories/user.repository.js";
+import { hashPassword } from "../utils/password.js";
+import type { CreateUserInput } from "../types/user.types.js";
 
 export const getUsers = async (
   organizationId: number,
@@ -16,14 +18,22 @@ export const getUserById = async (
   return findUserById(userId);
 };
 
-export const createNewUser = async (data: {
-  email?: string;
-  username: string;
-  name?: string;
-  passwordHash: string;
-  role: string;
-  status: string;
-  organizationId: number;
-}) => {
-  return createUser(data);
+
+
+export const createNewUser = async (
+  data: CreateUserInput,
+) => {
+  const { password, ...userData } = data;
+
+  const passwordHash = await hashPassword(password);
+
+  try {
+    return await createUser({
+      ...userData,
+      passwordHash,
+    });
+  } catch (error) {
+    console.error("Failed to create user:", error);
+    throw error;
+  }
 };

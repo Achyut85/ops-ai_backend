@@ -61,7 +61,7 @@ export const createUserController = async (
       email: req.body.email,
       username: req.body.username,
       name: req.body.name,
-      passwordHash: req.body.passwordHash,
+      password: req.body.password,
       role: req.body.role,
       status: req.body.status,
       organizationId: req.body.organizationId,
@@ -69,10 +69,10 @@ export const createUserController = async (
 
     return res.status(201).json(user);
   } catch (error) {
-    console.error("Failed to create user:", error);
+  console.error("CREATE USER ERROR:", error);
 
-    return res.status(500).json({
-      message: "Failed to create user",
-    });
-  }
+  return res.status(500).json({
+    message: "Failed to create user",
+  });
+}
 };
