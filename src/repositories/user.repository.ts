@@ -1,9 +1,12 @@
 import { db } from "../prisma/db.js";
 
+
 import type {
   CreateUserRepositoryInput,
   UpdateUserInput,
 } from "../types/user.types.js";
+
+import { ConflictError } from "../errors/conflict.error.js";
 
 export const findUsers = async (
   organizationId: number,
@@ -39,9 +42,10 @@ export const findUserById = async (
 export const createUser = async (
   data: CreateUserRepositoryInput,
 ) => {
-  return db.orm.public.User
-    .select(
-      "id",
+  try {
+    return await db.orm.public.User
+      .select(
+        "id",
       "username",
       "email",
       "name",
@@ -60,6 +64,18 @@ export const createUser = async (
       status: data.status,
       organizationId: data.organizationId,
     });
+  } catch (error) {
+   if (
+      typeof error === "object" &&
+      error !== null &&
+      "sqlState" in error &&
+      error.sqlState === "23505"
+    ) {
+      throw new ConflictError("Username already exists");
+    }
+
+    throw error;
+  }
 };
 
 export const updateUser = async (

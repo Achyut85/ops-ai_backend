@@ -27,13 +27,8 @@ export const createNewUser = async (
 
   const passwordHash = await hashPassword(password);
 
-  try {
-    return await createUser({
-      ...userData,
-      passwordHash,
-    });
-  } catch (error) {
-    console.error("Failed to create user:", error);
-    throw error;
-  }
+  return createUser({
+    ...userData,
+    passwordHash,
+  });
 };

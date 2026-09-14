@@ -81,5 +81,9 @@ it("should not allow duplicate username in the same organization", async () => {
     .post("/api/v1/users")
     .send(userData);
 
-  expect(secondResponse.status).toBe(500);
+  expect(secondResponse.status).toBe(409);
+
+  expect(secondResponse.body).toEqual({
+    message: "Username already exists",
+  });
 });

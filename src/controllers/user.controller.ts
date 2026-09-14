@@ -56,23 +56,15 @@ export const createUserController = async (
   req: Request,
   res: Response,
 ) => {
-  try {
-    const user = await createNewUser({
-      email: req.body.email,
-      username: req.body.username,
-      name: req.body.name,
-      password: req.body.password,
-      role: req.body.role,
-      status: req.body.status,
-      organizationId: req.body.organizationId,
-    });
-
-    return res.status(201).json(user);
-  } catch (error) {
-  console.error("CREATE USER ERROR:", error);
-
-  return res.status(500).json({
-    message: "Failed to create user",
+  const user = await createNewUser({
+    email: req.body.email,
+    username: req.body.username,
+    name: req.body.name,
+    password: req.body.password,
+    role: req.body.role,
+    status: req.body.status,
+    organizationId: req.body.organizationId,
   });
-}
+return res.status(201).json(user);
 };
+  
