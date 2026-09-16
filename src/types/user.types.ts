@@ -14,6 +14,11 @@ export type CreateUserRepositoryInput =
   };
 
 export type UpdateUserInput = {
-  username?: string;
   name?: string;
+  email?: string;
 };
+
+export type UpdateUserStatusInput = {
+  status: string;
+};
+

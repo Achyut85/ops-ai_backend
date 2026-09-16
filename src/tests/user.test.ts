@@ -46,7 +46,6 @@ const response = await request(app)
     password: "TestPassword123!",
     role: "TICKET_HANDLER",
     status: "ACTIVE",
-    organizationId: 1,
   });;
 
     expect(response.status).toBe(201);
@@ -86,4 +85,135 @@ it("should not allow duplicate username in the same organization", async () => {
   expect(secondResponse.body).toEqual({
     message: "Username already exists",
   });
+});
+
+it("should update a user's name and email", async () => {
+  const username = `updateuser_${Date.now()}`;
+  const email = `${username}@example.com`;
+
+  const createResponse = await request(app)
+    .post("/api/v1/users")
+    .send({
+      email,
+      username,
+      name: "Old Name",
+      password: "TestPassword123!",
+      role: "TICKET_HANDLER",
+      status: "ACTIVE",
+      organizationId: 1,
+    });
+
+  expect(createResponse.status).toBe(201);
+
+  const userId = createResponse.body.id;
+
+  const updateResponse = await request(app)
+    .patch(`/api/v1/users/${userId}`)
+    .send({
+      name: "New Name",
+      email: "newemail@example.com",
+    });
+
+  expect(updateResponse.status).toBe(200);
+  expect(updateResponse.body.id).toBe(userId);
+  expect(updateResponse.body.name).toBe("New Name");
+  expect(updateResponse.body.email).toBe("newemail@example.com");
+});
+
+it("should return 404 when updating a non-existing user", async () => {
+  const response = await request(app)
+    .patch("/api/v1/users/999999")
+    .send({
+      name: "New Name",
+      email: "newemail@example.com",
+    });
+
+  expect(response.status).toBe(404);
+  expect(response.body).toEqual({
+    message: "User not found",
+  });
+});
+
+
+it("should update a user's status", async () => {
+  const username = `statususer_${Date.now()}`;
+
+  const createResponse = await request(app)
+    .post("/api/v1/users")
+    .send({
+      username,
+      password: "TestPassword123!",
+      role: "TICKET_HANDLER",
+      status: "ACTIVE",
+    });
+
+  expect(createResponse.status).toBe(201);
+
+  const userId = createResponse.body.id;
+
+  const updateResponse = await request(app)
+    .patch(`/api/v1/users/${userId}/status`)
+    .send({
+      status: "DISABLED",
+    });
+
+  expect(updateResponse.status).toBe(200);
+  expect(updateResponse.body.id).toBe(userId);
+  expect(updateResponse.body.status).toBe("DISABLED");
+  expect(updateResponse.body.organizationId).toBe(1);
+});
+
+it("should return 404 when updating status of a non-existing user", async () => {
+  const response = await request(app)
+    .patch("/api/v1/users/999999/status")
+    .send({
+      status: "DISABLED",
+    });
+
+  expect(response.status).toBe(404);
+
+  expect(response.body).toEqual({
+    message: "User not found",
+  });
+});
+
+
+it("should update the current user's profile", async () => {
+  const response = await request(app)
+    .patch("/api/v1/users/me")
+    .send({
+      name: "Updated Current User",
+      email: "updated@example.com",
+    });
+
+  expect(response.status).toBe(200);
+
+  expect(response.body.id).toBe(1);
+  expect(response.body.organizationId).toBe(1);
+  expect(response.body.name).toBe("Updated Current User");
+  expect(response.body.email).toBe("updated@example.com");
+});
+
+
+it("should only update allowed profile fields for the current user", async () => {
+  const response = await request(app)
+    .patch("/api/v1/users/me")
+    .send({
+      name: "Profile User",
+      email: "profile@example.com",
+      role: "MANAGER",
+      status: "DISABLED",
+      organizationId: 999,
+    });
+
+  expect(response.status).toBe(200);
+
+  expect(response.body.id).toBe(1);
+  expect(response.body.organizationId).toBe(1);
+
+  expect(response.body.name).toBe("Profile User");
+  expect(response.body.email).toBe("profile@example.com");
+
+  expect(response.body.role).not.toBe("MANAGER");
+  expect(response.body.status).not.toBe("DISABLED");
 });
