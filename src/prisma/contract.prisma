@@ -65,14 +65,29 @@ model Ticket {
 }
 
 model TicketHistory {
-  id        Int               @id @default(autoincrement())
+  id             Int               @id @default(autoincrement())
 
-  ticketId  Int
-  ticket    Ticket            @relation(fields: [ticketId],references: [id],)
+  organizationId Int
+  organization   Organization      @relation(
+    fields: [organizationId],
+    references: [id]
+  )
 
-  userId    Int
-  user      User              @relation(fields: [userId], references: [id])
+  ticketId       Int
+  ticket         Ticket            @relation(
+    fields: [ticketId],
+    references: [id]
+  )
 
-  status    String
-  createdAt TimestamptzString @default(now())
+  userId         Int
+  user           User              @relation(
+    fields: [userId],
+    references: [id]
+  )
+
+  action         String
+  oldStatus      String?
+  newStatus      String?
+
+  createdAt      TimestamptzString @default(now())
 }

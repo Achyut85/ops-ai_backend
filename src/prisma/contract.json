@@ -362,6 +362,13 @@
           },
           "TicketHistory": {
             "fields": {
+              "action": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "createdAt": {
                 "nullable": false,
                 "type": {
@@ -376,10 +383,24 @@
                   "kind": "scalar"
                 }
               },
-              "status": {
-                "nullable": false,
+              "newStatus": {
+                "nullable": true,
                 "type": {
                   "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "oldStatus": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "organizationId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
                   "kind": "scalar"
                 }
               },
@@ -399,6 +420,21 @@
               }
             },
             "relations": {
+              "organization": {
+                "cardinality": "N:1",
+                "on": {
+                  "localFields": [
+                    "organizationId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Organization",
+                  "namespace": "public"
+                }
+              },
               "ticket": {
                 "cardinality": "N:1",
                 "on": {
@@ -432,14 +468,23 @@
             },
             "storage": {
               "fields": {
+                "action": {
+                  "column": "action"
+                },
                 "createdAt": {
                   "column": "createdAt"
                 },
                 "id": {
                   "column": "id"
                 },
-                "status": {
-                  "column": "status"
+                "newStatus": {
+                  "column": "newStatus"
+                },
+                "oldStatus": {
+                  "column": "oldStatus"
+                },
+                "organizationId": {
+                  "column": "organizationId"
                 },
                 "ticketId": {
                   "column": "ticketId"
@@ -853,6 +898,11 @@
             },
             "ticketHistory": {
               "columns": {
+                "action": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
                 "createdAt": {
                   "codecId": "pg/timestamptz-string@1",
                   "default": {
@@ -871,9 +921,19 @@
                   "nativeType": "int4",
                   "nullable": false
                 },
-                "status": {
+                "newStatus": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
+                  "nullable": true
+                },
+                "oldStatus": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "organizationId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
                   "nullable": false
                 },
                 "ticketId": {
@@ -888,6 +948,22 @@
                 }
               },
               "foreignKeys": [
+                {
+                  "source": {
+                    "columns": [
+                      "organizationId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "ticketHistory"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "organization"
+                  }
+                },
                 {
                   "source": {
                     "columns": [
@@ -922,6 +998,14 @@
                 }
               ],
               "indexes": [
+                {
+                  "columns": [
+                    "organizationId"
+                  ],
+                  "name": "ticketHistory_organizationId_idx_2e17ef41",
+                  "prefix": "ticketHistory_organizationId_idx",
+                  "unique": false
+                },
                 {
                   "columns": [
                     "ticketId"
@@ -1055,7 +1139,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "fc3ec6c492ab412e07e519bdcdc4b49973e1ac59766b5145a6ed645b83479fd8"
+    "storageHash": "dfd102f7ed4f78a97ca3a8bb151c8852459f02ccb73e2e611c8473ec027360c6"
   },
   "execution": {
     "executionHash": "24941c1c510e186fb4381dc5525fa04c1df2ab75551ceb439658b166487381da",

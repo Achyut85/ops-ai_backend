@@ -3,6 +3,7 @@ import request from "supertest";
 import app from "../app.js";
 
 describe("Ticket API", () => {
+
   // GET /tickets
   it("should get all active tickets", async () => {
     const response = await request(app)
@@ -13,8 +14,10 @@ describe("Ticket API", () => {
 
     for (const ticket of response.body) {
       expect(ticket.deletedAt).toBeNull();
+      expect(ticket.organizationId).toBe(1);
     }
   });
+
 
   // GET /tickets?status=OPEN
   it("should filter tickets by status", async () => {
@@ -32,6 +35,7 @@ describe("Ticket API", () => {
     }
   });
 
+
   // GET /tickets?assignedUserId=1
   it("should filter tickets by assigned user", async () => {
     const response = await request(app)
@@ -48,6 +52,7 @@ describe("Ticket API", () => {
     }
   });
 
+
   // Invalid assignedUserId
   it("should reject invalid assignedUserId", async () => {
     const response = await request(app)
@@ -63,7 +68,24 @@ describe("Ticket API", () => {
     });
   });
 
-  // GET /tickets/:id
+
+  // Invalid status query
+  it("should reject invalid status filter", async () => {
+    const response = await request(app)
+      .get("/api/v1/tickets")
+      .query({
+        status: "INVALID_STATUS",
+      });
+
+    expect(response.status).toBe(400);
+
+    expect(response.body).toEqual({
+      message: "Invalid ticket status",
+    });
+  });
+
+
+  // GET /tickets/:_id
   it("should get an existing ticket", async () => {
     const createResponse = await request(app)
       .post("/api/v1/tickets")
@@ -71,7 +93,6 @@ describe("Ticket API", () => {
         title: "Get test ticket",
         description: "Created for GET test",
         status: "OPEN",
-        organizationId: 1,
         assignedUserId: 1,
       });
 
@@ -86,15 +107,15 @@ describe("Ticket API", () => {
     expect(response.body.id).toBe(ticketId);
   });
 
-  // GET /tickets/:id/history
-  it("should get ticket history", async () => {
+
+  // GET /tickets/:_id/history
+  it("should get ticket history after status update", async () => {
     const createResponse = await request(app)
       .post("/api/v1/tickets")
       .send({
         title: "History test ticket",
         description: "Created for history test",
         status: "OPEN",
-        organizationId: 1,
         assignedUserId: 1,
       });
 
@@ -116,10 +137,21 @@ describe("Ticket API", () => {
     expect(response.status).toBe(200);
     expect(Array.isArray(response.body)).toBe(true);
 
-    for (const history of response.body) {
-      expect(history.ticketId).toBe(ticketId);
-    }
+    expect(response.body.length).toBeGreaterThan(0);
+
+    const statusHistory = response.body.find(
+      (history: any) =>
+        history.action === "STATUS_CHANGED",
+    );
+
+    expect(statusHistory).toBeDefined();
+    expect(statusHistory.ticketId).toBe(ticketId);
+    expect(statusHistory.organizationId).toBe(1);
+    expect(statusHistory.userId).toBe(1);
+    expect(statusHistory.oldStatus).toBe("OPEN");
+    expect(statusHistory.newStatus).toBe("IN_PROGRESS");
   });
+
 
   // Non-existing ticket
   it("should return 404 for non-existing ticket", async () => {
@@ -133,6 +165,7 @@ describe("Ticket API", () => {
     });
   });
 
+
   // POST /tickets
   it("should create a ticket", async () => {
     const response = await request(app)
@@ -141,17 +174,60 @@ describe("Ticket API", () => {
         title: "Automated test ticket",
         description: "Created by Vitest",
         status: "OPEN",
-        organizationId: 1,
         assignedUserId: 1,
       });
 
     expect(response.status).toBe(201);
+
     expect(response.body.id).toBeTypeOf("number");
-    expect(response.body.title).toBe("Automated test ticket");
+    expect(response.body.title).toBe(
+      "Automated test ticket",
+    );
     expect(response.body.status).toBe("OPEN");
+    expect(response.body.organizationId).toBe(1);
+    expect(response.body.assignedUserId).toBe(1);
   });
 
-  // PATCH /tickets/:id
+
+  // Organization ID should not come from client
+  it("should ignore organizationId from request body", async () => {
+    const response = await request(app)
+      .post("/api/v1/tickets")
+      .send({
+        title: "Organization isolation test",
+        description: "Organization should come from server",
+        status: "OPEN",
+        organizationId: 999,
+        assignedUserId: 1,
+      });
+
+    expect(response.status).toBe(201);
+
+    expect(response.body.organizationId).toBe(1);
+  });
+
+
+  // POST with invalid assigned user
+  it("should reject an assigned user from another organization", async () => {
+    const response = await request(app)
+      .post("/api/v1/tickets")
+      .send({
+        title: "Invalid assignment test",
+        description: "Invalid organization assignment",
+        status: "OPEN",
+        assignedUserId: 999999,
+      });
+
+    expect(response.status).toBe(400);
+
+    expect(response.body).toEqual({
+      message:
+        "Assigned user does not belong to this organization",
+    });
+  });
+
+
+  // PATCH /tickets/:_id
   it("should update ticket status", async () => {
     const createResponse = await request(app)
       .post("/api/v1/tickets")
@@ -159,7 +235,6 @@ describe("Ticket API", () => {
         title: "Update test ticket",
         description: "Created for update test",
         status: "OPEN",
-        organizationId: 1,
         assignedUserId: 1,
       });
 
@@ -174,8 +249,11 @@ describe("Ticket API", () => {
       });
 
     expect(response.status).toBe(200);
-    expect(response.body.status).toBe("IN_PROGRESS");
+    expect(response.body.status).toBe(
+      "IN_PROGRESS",
+    );
   });
+
 
   // Same status
   it("should reject the same status", async () => {
@@ -185,7 +263,6 @@ describe("Ticket API", () => {
         title: "Same status test",
         description: "Created for same status test",
         status: "IN_PROGRESS",
-        organizationId: 1,
         assignedUserId: 1,
       });
 
@@ -199,12 +276,13 @@ describe("Ticket API", () => {
         status: "IN_PROGRESS",
       });
 
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(409);
 
     expect(response.body).toEqual({
-      message: "Ticket is already in this status",
+      message: "Ticket already has this status",
     });
   });
+
 
   // Invalid status
   it("should reject an invalid status", async () => {
@@ -214,7 +292,6 @@ describe("Ticket API", () => {
         title: "Invalid status test",
         description: "Created for invalid status test",
         status: "OPEN",
-        organizationId: 1,
         assignedUserId: 1,
       });
 
@@ -235,7 +312,8 @@ describe("Ticket API", () => {
     });
   });
 
-  // DELETE /tickets/:id
+
+  // DELETE /tickets/:_id
   it("should soft delete the ticket", async () => {
     const createResponse = await request(app)
       .post("/api/v1/tickets")
@@ -243,7 +321,6 @@ describe("Ticket API", () => {
         title: "Delete test ticket",
         description: "Created for delete test",
         status: "OPEN",
-        organizationId: 1,
         assignedUserId: 1,
       });
 
@@ -261,6 +338,7 @@ describe("Ticket API", () => {
     });
   });
 
+
   // GET deleted ticket
   it("should not return a deleted ticket", async () => {
     const createResponse = await request(app)
@@ -269,7 +347,6 @@ describe("Ticket API", () => {
         title: "Deleted ticket test",
         description: "Created for deleted ticket test",
         status: "OPEN",
-        organizationId: 1,
         assignedUserId: 1,
       });
 
@@ -290,15 +367,15 @@ describe("Ticket API", () => {
     });
   });
 
+
   // History after delete
-  it("should still return history for a deleted ticket", async () => {
+  it("should return history for a deleted ticket", async () => {
     const createResponse = await request(app)
       .post("/api/v1/tickets")
       .send({
         title: "Deleted history test",
         description: "Created for deleted history test",
         status: "OPEN",
-        organizationId: 1,
         assignedUserId: 1,
       });
 
@@ -315,10 +392,17 @@ describe("Ticket API", () => {
     expect(response.status).toBe(200);
     expect(Array.isArray(response.body)).toBe(true);
 
-    for (const history of response.body) {
-      expect(history.ticketId).toBe(ticketId);
-    }
+    const deletedHistory = response.body.find(
+      (history: any) =>
+        history.action === "DELETED",
+    );
+
+    expect(deletedHistory).toBeDefined();
+    expect(deletedHistory.ticketId).toBe(ticketId);
+    expect(deletedHistory.organizationId).toBe(1);
+    expect(deletedHistory.userId).toBe(1);
   });
+
 
   // DELETE already deleted ticket
   it("should not delete an already deleted ticket", async () => {
@@ -328,7 +412,6 @@ describe("Ticket API", () => {
         title: "Double delete test",
         description: "Created for double delete test",
         status: "OPEN",
-        organizationId: 1,
         assignedUserId: 1,
       });
 
@@ -348,4 +431,5 @@ describe("Ticket API", () => {
       message: "Ticket not found",
     });
   });
+
 });

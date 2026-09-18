@@ -19,8 +19,8 @@ router.post("/", createTicketController);
 
 router.patch("/:_id", updateTicketController);
 
-router.delete("/:_id", deleteTicketController);
-
 router.get("/:_id/history", getTicketHistoryController);
+
+router.delete("/:_id", deleteTicketController);
 
 export default router;

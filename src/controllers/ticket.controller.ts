@@ -9,7 +9,7 @@ import {
   getTicketHistory,
 } from "../services/ticket.service.js";
 
-
+import { isTicketStatus } from "../utils/ticket.js";
 // GET /tickets
 export const getTicketsController = async (
   req: Request,
@@ -19,32 +19,38 @@ export const getTicketsController = async (
   const organizationId = 1;
 
   const assignedUserId = req.query.assignedUserId
-    ? parseInt(req.query.assignedUserId as string, 10)
+    ? Number(req.query.assignedUserId)
     : undefined;
 
-  const status = req.query.status as string | undefined;
+  const status = req.query.status
+    ? String(req.query.status)
+    : undefined;
 
-  if (assignedUserId !== undefined && isNaN(assignedUserId)) {
+  if (
+    assignedUserId !== undefined &&
+    !Number.isInteger(assignedUserId)
+  ) {
     return res.status(400).json({
       message: "Invalid assignedUserId",
     });
   }
 
-  try {
-    const tickets = await getTickets(
-      organizationId,
-      assignedUserId,
-      status,
-    );
-
-    return res.json(tickets);
-  } catch (error) {
-    console.error("Failed to fetch tickets:", error);
-
-    return res.status(500).json({
-      message: "Failed to fetch tickets",
+  if (
+    status !== undefined &&
+    !isTicketStatus(status)
+  ) {
+    return res.status(400).json({
+      message: "Invalid ticket status",
     });
   }
+
+  const tickets = await getTickets(
+    organizationId,
+    assignedUserId,
+    status,
+  );
+
+  return res.json(tickets);
 };
 
 
@@ -53,140 +59,127 @@ export const createTicketController = async (
   req: Request,
   res: Response,
 ) => {
-  try {
-    const ticket = await createNewTicket({
+  // Temporary until authentication
+  const organizationId = 1;
+
+  const ticket = await createNewTicket(
+    organizationId,
+    {
       title: req.body.title,
       description: req.body.description,
       status: req.body.status,
-      organizationId: req.body.organizationId,
       assignedUserId: req.body.assignedUserId,
-    });
+    },
+  );
 
-    return res.status(201).json(ticket);
-  } catch (error) {
-    console.error("Failed to create ticket:", error);
-
-    return res.status(500).json({
-      message: "Failed to create ticket",
-    });
-  }
+  return res.status(201).json(ticket);
 };
 
 
-// GET /tickets/:id
+// GET /tickets/:_id
 export const getTicketByIdController = async (
   req: Request<{ _id: string }>,
   res: Response,
 ) => {
-  const ticketId = parseInt(req.params._id, 10);
+  // Temporary until authentication
+  const organizationId = 1;
 
-  try {
-    const ticket = await getTicketById(ticketId);
+  const ticketId = Number(req.params._id);
 
-    if (!ticket) {
-      return res.status(404).json({
-        message: "Ticket not found",
-      });
-    }
-
-    return res.json(ticket);
-  } catch (error) {
-    console.error("Failed to fetch ticket:", error);
-
-    return res.status(500).json({
-      message: "Failed to fetch ticket",
+  if (!Number.isInteger(ticketId)) {
+    return res.status(400).json({
+      message: "Invalid ticket ID",
     });
   }
+
+  const ticket = await getTicketById(
+    organizationId,
+    ticketId,
+  );
+
+  return res.json(ticket);
 };
 
 
-// PATCH /tickets/:id
+// PATCH /tickets/:_id
 export const updateTicketController = async (
   req: Request<{ _id: string }>,
   res: Response,
 ) => {
-  const ticketId = parseInt(req.params._id, 10);
-  const { status } = req.body;
+  // Temporary until authentication
+  const organizationId = 1;
+  const userId = 1;
 
-  try {
-    const result = await updateTicket(
-      ticketId,
-      status,
-    );
+  const ticketId = Number(req.params._id);
 
-    if (result === "INVALID_STATUS") {
-      return res.status(400).json({
-        message: "Invalid ticket status",
-      });
-    }
-
-    if (result === null) {
-      return res.status(404).json({
-        message: "Ticket not found",
-      });
-    }
-
-    if (result === "SAME_STATUS") {
-      return res.status(400).json({
-        message: "Ticket is already in this status",
-      });
-    }
-
-    return res.json(result);
-  } catch (error) {
-    console.error("Transaction failed:", error);
-
-    return res.status(500).json({
-      message: "Failed to update ticket",
+  if (!Number.isInteger(ticketId)) {
+    return res.status(400).json({
+      message: "Invalid ticket ID",
     });
   }
+
+  const { status } = req.body;
+
+  const updatedTicket = await updateTicket(
+    organizationId,
+    userId,
+    ticketId,
+    status,
+  );
+
+  return res.json(updatedTicket);
 };
 
 
-// DELETE /tickets/:id
+// DELETE /tickets/:_id
 export const deleteTicketController = async (
   req: Request<{ _id: string }>,
   res: Response,
 ) => {
-  const ticketId = parseInt(req.params._id, 10);
+  // Temporary until authentication
+  const organizationId = 1;
+  const userId = 1;
 
-  try {
-    const deletedTicket = await deleteTicket(ticketId);
+  const ticketId = Number(req.params._id);
 
-    if (!deletedTicket) {
-      return res.status(404).json({
-        message: "Ticket not found",
-      });
-    }
-
-    return res.json({
-      message: "Ticket deleted successfully",
-    });
-  } catch (error) {
-    console.error("Failed to delete ticket:", error);
-
-    return res.status(500).json({
-      message: "Failed to delete ticket",
+  if (!Number.isInteger(ticketId)) {
+    return res.status(400).json({
+      message: "Invalid ticket ID",
     });
   }
+
+  await deleteTicket(
+    organizationId,
+    ticketId,
+    userId,
+  );
+
+  return res.json({
+    message: "Ticket deleted successfully",
+  });
 };
 
 
+// GET /tickets/:_id/history
 export const getTicketHistoryController = async (
   req: Request<{ _id: string }>,
   res: Response,
 ) => {
-  const ticketId = parseInt(req.params._id, 10);
+  // Temporary until authentication
+  const organizationId = 1;
 
-  try {
-    const history = await getTicketHistory(ticketId);
+  const ticketId = Number(req.params._id);
 
-    return res.json(history);
-  } catch (error) {
-    console.error("Failed to fetch ticket history:", error);
-
-    return res.status(500).json({
-      message: "Failed to fetch ticket history",
+  if (!Number.isInteger(ticketId)) {
+    return res.status(400).json({
+      message: "Invalid ticket ID",
     });
   }
+
+  const history = await getTicketHistory(
+    organizationId,
+    ticketId,
+  );
+
+  return res.json(history);
 };

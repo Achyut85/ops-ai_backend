@@ -1,47 +1,46 @@
 import { db } from "../prisma/db.js";
-
+import type { CreateTicketHistoryInput, CreateTicketRepositoryInput, TicketHistoryAction, TicketStatus } from "../types/ticket.types.js";
 type TransactionClient =
   Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 
-// GET /tickets
 export const findTickets = async (
   organizationId: number,
   assignedUserId?: number,
-  status?: string,
+  status?: TicketStatus,
 ) => {
   return db.orm.public.Ticket
     .where({
       organizationId,
       deletedAt: null,
-      ...(assignedUserId !== undefined && { assignedUserId }),
-      ...(status !== undefined && { status }),
+      ...(assignedUserId !== undefined && {
+        assignedUserId,
+      }),
+      ...(status !== undefined && {
+        status,
+      }),
     })
     .all();
 };
 
 
-// GET /tickets/:id
 export const findTicketById = async (
+  organizationId: number,
   ticketId: number,
 ) => {
   return db.orm.public.Ticket
     .where({
       id: ticketId,
+      organizationId,
       deletedAt: null,
     })
     .first();
 };
 
-
 // POST /tickets
-export const createTicket = async (data: {
-  title: string;
-  description?: string;
-  status: string;
-  organizationId: number;
-  assignedUserId?: number;
-}) => {
+export const createTicket = async (
+  data: CreateTicketRepositoryInput,
+) => {
   return db.orm.public.Ticket.create({
     title: data.title,
     description: data.description ?? null,
@@ -56,27 +55,30 @@ export const createTicket = async (data: {
 // Find ticket inside transaction
 export const findTicketByIdTx = async (
   tx: TransactionClient,
+  organizationId: number,
   ticketId: number,
 ) => {
   return tx.orm.public.Ticket
     .where({
       id: ticketId,
+      organizationId,
       deletedAt: null,
     })
     .first();
 };
 
-
 // PATCH /tickets/:id
 // Update ticket status inside transaction
 export const updateTicketStatus = async (
   tx: TransactionClient,
+  organizationId: number,
   ticketId: number,
-  status: string,
+  status: TicketStatus,
 ) => {
   return tx.orm.public.Ticket
     .where({
       id: ticketId,
+      organizationId,
       deletedAt: null,
     })
     .update({
@@ -89,25 +91,27 @@ export const updateTicketStatus = async (
 // Create history inside transaction
 export const createTicketHistory = async (
   tx: TransactionClient,
-  ticketId: number,
-  userId: number,
-  status: string,
+  data: CreateTicketHistoryInput
 ) => {
   return tx.orm.public.TicketHistory.create({
-    ticketId,
-    userId,
-    status,
+    organizationId: data.organizationId,
+    ticketId: data.ticketId,
+    userId: data.userId,
+    action: data.action,
+    oldStatus: data.oldStatus ?? null,
+    newStatus: data.newStatus ?? null,
   });
 };
-
-
 // DELETE /tickets/:id
 export const softDeleteTicket = async (
+  tx: TransactionClient,
+  organizationId: number,
   ticketId: number,
 ) => {
-  return db.orm.public.Ticket
+  return tx.orm.public.Ticket
     .where({
       id: ticketId,
+      organizationId,
       deletedAt: null,
     })
     .update({
@@ -115,12 +119,13 @@ export const softDeleteTicket = async (
     });
 };
 
-
 export const findTicketHistory = async (
+  organizationId: number,
   ticketId: number,
 ) => {
   return db.orm.public.TicketHistory
     .where({
+      organizationId,
       ticketId,
     })
     .all();
