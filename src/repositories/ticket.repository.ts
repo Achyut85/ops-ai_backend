@@ -1,5 +1,6 @@
 import { db } from "../prisma/db.js";
-import type { CreateTicketHistoryInput, CreateTicketRepositoryInput, TicketHistoryAction, TicketStatus } from "../types/ticket.types.js";
+import type { CreateTicketHistoryInput, CreateTicketRepositoryInput } from "../types/ticket.types.js";
+import type { TicketStatus } from "../schemas/ticket.schema.js";
 type TransactionClient =
   Parameters<Parameters<typeof db.transaction>[0]>[0];
 
@@ -39,9 +40,10 @@ export const findTicketById = async (
 
 // POST /tickets
 export const createTicket = async (
+  tx: TransactionClient,
   data: CreateTicketRepositoryInput,
 ) => {
-  return db.orm.public.Ticket.create({
+  return tx.orm.public.Ticket.create({
     title: data.title,
     description: data.description ?? null,
     status: data.status,

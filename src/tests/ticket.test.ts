@@ -308,7 +308,7 @@ describe("Ticket API", () => {
     expect(response.status).toBe(400);
 
     expect(response.body).toEqual({
-      message: "Invalid ticket status",
+      message: "Invalid option: expected one of \"OPEN\"|\"IN_PROGRESS\"|\"RESOLVED\"",
     });
   });
 

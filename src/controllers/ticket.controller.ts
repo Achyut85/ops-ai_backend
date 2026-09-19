@@ -10,6 +10,8 @@ import {
 } from "../services/ticket.service.js";
 
 import { isTicketStatus } from "../utils/ticket.js";
+import { ValidationError } from "../errors/validation.error.js";
+import { createTicketSchema, updateTicketSchema } from "../schemas/ticket.schema.js";
 // GET /tickets
 export const getTicketsController = async (
   req: Request,
@@ -59,22 +61,21 @@ export const createTicketController = async (
   req: Request,
   res: Response,
 ) => {
-  // Temporary until authentication
   const organizationId = 1;
+  const userId = 1;
 
-  const ticket = await createNewTicket(
-    organizationId,
-    {
-      title: req.body.title,
-      description: req.body.description,
-      status: req.body.status,
-      assignedUserId: req.body.assignedUserId,
-    },
-  );
+  const parsed = createTicketSchema.safeParse(req.body);
+
+  if (!parsed.success) {
+    throw new ValidationError(
+      parsed.error.issues.map((issue) => issue.message).join(", "),
+    );
+  }
+
+  const ticket = await createNewTicket(organizationId, userId, parsed.data);
 
   return res.status(201).json(ticket);
 };
-
 
 // GET /tickets/:_id
 export const getTicketByIdController = async (
@@ -106,30 +107,32 @@ export const updateTicketController = async (
   req: Request<{ _id: string }>,
   res: Response,
 ) => {
-  // Temporary until authentication
   const organizationId = 1;
   const userId = 1;
 
   const ticketId = Number(req.params._id);
 
   if (!Number.isInteger(ticketId)) {
-    return res.status(400).json({
-      message: "Invalid ticket ID",
-    });
+    return res.status(400).json({ message: "Invalid ticket ID" });
   }
 
-  const { status } = req.body;
+  const parsed = updateTicketSchema.safeParse(req.body);
+
+  if (!parsed.success) {
+    throw new ValidationError(
+      parsed.error.issues.map((issue) => issue.message).join(", ")
+    );
+  }
 
   const updatedTicket = await updateTicket(
     organizationId,
     userId,
     ticketId,
-    status,
+    parsed.data.status,
   );
 
   return res.json(updatedTicket);
 };
-
 
 // DELETE /tickets/:_id
 export const deleteTicketController = async (

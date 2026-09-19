@@ -1,11 +1,7 @@
-import type { TicketStatus } from "../types/ticket.types.js";
+import { ticketStatusSchema, type TicketStatus } from "../schemas/ticket.schema.js";
 
 export const isTicketStatus = (
   status: string,
 ): status is TicketStatus => {
-  return [
-    "OPEN",
-    "IN_PROGRESS",
-    "RESOLVED",
-  ].includes(status as TicketStatus);
+  return ticketStatusSchema.safeParse(status).success;
 };

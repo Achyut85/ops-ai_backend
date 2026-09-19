@@ -13,10 +13,9 @@ import {
 
 import { findUserById } from "../repositories/user.repository.js";
 
-import type {
-  TicketStatus,
-  CreateTicketInput,
-} from "../types/ticket.types.js";
+import type { CreateTicketInput } from "../schemas/ticket.schema.ts";
+import { ticketStatusSchema } from "../schemas/ticket.schema.js";
+type TicketStatus = typeof ticketStatusSchema._output;
 
 import { NotFoundError } from "../errors/not-found.error.js";
 import { ConflictError } from "../errors/conflict.error.js";
@@ -42,24 +41,27 @@ export const getTickets = async (
 // POST /tickets
 export const createNewTicket = async (
   organizationId: number,
+  userId: number,
   data: CreateTicketInput,
 ) => {
   if (data.assignedUserId !== undefined) {
-    const assignedUser = await findUserById(
-      organizationId,
-      data.assignedUserId,
-    );
-
+    const assignedUser = await findUserById(organizationId, data.assignedUserId);
     if (!assignedUser) {
-      throw new ValidationError(
-        "Assigned user does not belong to this organization",
-      );
+      throw new ValidationError("Assigned user does not belong to this organization");
     }
   }
 
-  return createTicket({
-    ...data,
-    organizationId,
+  return db.transaction(async (tx) => {
+    const ticket = await createTicket(tx, { ...data, organizationId });
+
+    await createTicketHistory(tx, {
+      organizationId,
+      ticketId: ticket.id,
+      userId,
+      action: "CREATED",
+    });
+
+    return ticket;
   });
 };
 
@@ -92,11 +94,6 @@ export const updateTicket = async (
   status: TicketStatus,
 ) => {
   // Runtime validation.
-  if (!isTicketStatus(status)) {
-    throw new ValidationError(
-      "Invalid ticket status",
-    );
-  }
 
   return db.transaction(async (tx) => {
     // Find ticket inside the organization.
@@ -168,34 +165,19 @@ export const deleteTicket = async (
   ticketId: number,
   userId: number,
 ) => {
-  // Make sure the ticket exists
-  // inside this organization.
-  const ticket = await findTicketById(
-    organizationId,
-    ticketId,
-  );
-
-  if (!ticket) {
-    throw new NotFoundError(
-      "Ticket not found",
-    );
-  }
-
   return db.transaction(async (tx) => {
-    // Soft delete.
-    const deletedTicket = await softDeleteTicket(
-      tx,
-      organizationId,
-      ticketId,
-    );
+    const ticket = await findTicketByIdTx(tx, organizationId, ticketId);
 
-    if (!deletedTicket) {
-      throw new Error(
-        "Ticket deletion failed",
-      );
+    if (!ticket) {
+      throw new NotFoundError("Ticket not found");
     }
 
-    // Audit deletion.
+    const deletedTicket = await softDeleteTicket(tx, organizationId, ticketId);
+
+    if (!deletedTicket) {
+      throw new Error("Ticket deletion failed");
+    }
+
     await createTicketHistory(tx, {
       organizationId,
       ticketId,

@@ -1,19 +1,9 @@
-export type TicketStatus =
-  | "OPEN"
-  | "IN_PROGRESS"
-  | "RESOLVED";
+import type { CreateTicketInput , TicketStatus} from "../schemas/ticket.schema.js";
 
-export type CreateTicketInput = {
-  title: string;
-  description?: string;
-  status: TicketStatus;
-  assignedUserId?: number;
+
+export type CreateTicketRepositoryInput = CreateTicketInput & {
+  organizationId: number;
 };
-
-export type CreateTicketRepositoryInput =
-  CreateTicketInput & {
-    organizationId: number;
-  };
 
 export type UpdateTicketInput = {
   title?: string;
