@@ -1,6 +1,14 @@
 import { db } from "../prisma/db.js";
-import type { CreateTicketHistoryInput, CreateTicketRepositoryInput } from "../types/ticket.types.js";
-import type { TicketStatus } from "../schemas/ticket.schema.js";
+
+import type {
+  CreateTicketHistoryInput,
+  CreateTicketRepositoryInput,
+} from "../types/ticket.types.js";
+
+import type {
+  TicketStatus,
+} from "../schemas/ticket.schema.js";
+
 type TransactionClient =
   Parameters<Parameters<typeof db.transaction>[0]>[0];
 

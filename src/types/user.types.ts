@@ -1,24 +1,19 @@
-export type CreateUserInput = {
-  email?: string;
-  username: string;
-  name?: string;
-  password: string;
-  role: string;
-  status: string;
-  organizationId: number;
-};
+import type {
+  CreateUserInput,
+  UpdateUserInput,
+  UpdateUserStatusInput,
+  UserRole,
+  UserStatus,
+} from "../schemas/user.schema.js";
 
 export type CreateUserRepositoryInput =
   Omit<CreateUserInput, "password"> & {
     passwordHash: string;
+    role: UserRole;
+    status: UserStatus;
+    organizationId: number;
   };
 
-export type UpdateUserInput = {
-  name?: string;
-  email?: string;
-};
+export type UpdateUserRepositoryInput = UpdateUserInput;
 
-export type UpdateUserStatusInput = {
-  status: string;
-};
-
+export type UpdateUserStatusRepositoryInput = UpdateUserStatusInput;

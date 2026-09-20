@@ -7,12 +7,9 @@ import {
 } from "../repositories/user.repository.js";
 
 import { hashPassword } from "../utils/password.js";
+import type { CreateUserInput, UpdateUserStatusInput , UpdateUserInput } from "../schemas/user.schema.js";
 
-import type {
-  CreateUserInput,
-  UpdateUserInput,
-  UpdateUserStatusInput,
-} from "../types/user.types.js";
+
 
 import { NotFoundError } from "../errors/not-found.error.js";
 
@@ -39,15 +36,19 @@ export const getUserById = async (
 };
 
 export const createNewUser = async (
+  organizationId: number,
   data: CreateUserInput,
 ) => {
   const { password, ...userData } = data;
 
   const passwordHash = await hashPassword(password);
 
-  return createUser({
+ return createUser({
     ...userData,
     passwordHash,
+    role: "TICKET_HANDLER",      // hardcoded — never from client
+    status: "ACTIVE",    // hardcoded — never from client
+    organizationId,
   });
 };
 

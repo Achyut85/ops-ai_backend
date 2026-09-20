@@ -9,47 +9,38 @@ import {
   getTicketHistory,
 } from "../services/ticket.service.js";
 
-import { isTicketStatus } from "../utils/ticket.js";
 import { ValidationError } from "../errors/validation.error.js";
-import { createTicketSchema, updateTicketSchema } from "../schemas/ticket.schema.js";
+
+import {
+  createTicketSchema,
+  updateTicketSchema,
+  ticketQuerySchema,
+} from "../schemas/ticket.schema.js";
+
+
 // GET /tickets
 export const getTicketsController = async (
   req: Request,
   res: Response,
 ) => {
-  // Temporary until authentication
   const organizationId = 1;
 
-  const assignedUserId = req.query.assignedUserId
-    ? Number(req.query.assignedUserId)
-    : undefined;
+  const parsed = ticketQuerySchema.safeParse(
+    req.query,
+  );
 
-  const status = req.query.status
-    ? String(req.query.status)
-    : undefined;
-
-  if (
-    assignedUserId !== undefined &&
-    !Number.isInteger(assignedUserId)
-  ) {
-    return res.status(400).json({
-      message: "Invalid assignedUserId",
-    });
-  }
-
-  if (
-    status !== undefined &&
-    !isTicketStatus(status)
-  ) {
-    return res.status(400).json({
-      message: "Invalid ticket status",
-    });
+  if (!parsed.success) {
+    throw new ValidationError(
+      parsed.error.issues
+        .map((issue) => issue.message)
+        .join(", "),
+    );
   }
 
   const tickets = await getTickets(
     organizationId,
-    assignedUserId,
-    status,
+    parsed.data.assignedUserId,
+    parsed.data.status,
   );
 
   return res.json(tickets);
@@ -64,25 +55,33 @@ export const createTicketController = async (
   const organizationId = 1;
   const userId = 1;
 
-  const parsed = createTicketSchema.safeParse(req.body);
+  const parsed = createTicketSchema.safeParse(
+    req.body,
+  );
 
   if (!parsed.success) {
     throw new ValidationError(
-      parsed.error.issues.map((issue) => issue.message).join(", "),
+      parsed.error.issues
+        .map((issue) => issue.message)
+        .join(", "),
     );
   }
 
-  const ticket = await createNewTicket(organizationId, userId, parsed.data);
+  const ticket = await createNewTicket(
+    organizationId,
+    userId,
+    parsed.data,
+  );
 
   return res.status(201).json(ticket);
 };
+
 
 // GET /tickets/:_id
 export const getTicketByIdController = async (
   req: Request<{ _id: string }>,
   res: Response,
 ) => {
-  // Temporary until authentication
   const organizationId = 1;
 
   const ticketId = Number(req.params._id);
@@ -113,14 +112,20 @@ export const updateTicketController = async (
   const ticketId = Number(req.params._id);
 
   if (!Number.isInteger(ticketId)) {
-    return res.status(400).json({ message: "Invalid ticket ID" });
+    return res.status(400).json({
+      message: "Invalid ticket ID",
+    });
   }
 
-  const parsed = updateTicketSchema.safeParse(req.body);
+  const parsed = updateTicketSchema.safeParse(
+    req.body,
+  );
 
   if (!parsed.success) {
     throw new ValidationError(
-      parsed.error.issues.map((issue) => issue.message).join(", ")
+      parsed.error.issues
+        .map((issue) => issue.message)
+        .join(", "),
     );
   }
 
@@ -134,12 +139,12 @@ export const updateTicketController = async (
   return res.json(updatedTicket);
 };
 
+
 // DELETE /tickets/:_id
 export const deleteTicketController = async (
   req: Request<{ _id: string }>,
   res: Response,
 ) => {
-  // Temporary until authentication
   const organizationId = 1;
   const userId = 1;
 
@@ -168,7 +173,6 @@ export const getTicketHistoryController = async (
   req: Request<{ _id: string }>,
   res: Response,
 ) => {
-  // Temporary until authentication
   const organizationId = 1;
 
   const ticketId = Number(req.params._id);

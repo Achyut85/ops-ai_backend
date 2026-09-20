@@ -2,10 +2,9 @@ import { db } from "../prisma/db.js";
 
 import type {
   CreateUserRepositoryInput,
-  UpdateUserInput,
-  UpdateUserStatusInput,
+  UpdateUserRepositoryInput,
+  UpdateUserStatusRepositoryInput,
 } from "../types/user.types.js";
-
 import { ConflictError } from "../errors/conflict.error.js";
 import { isUniqueConstraintError } from "../utils/database-error.js";
 
@@ -82,8 +81,13 @@ export const createUser = async (
 export const updateUser = async (
   organizationId: number,
   userId: number,
-  data: UpdateUserInput,
+  data: UpdateUserRepositoryInput,
 ) => {
+  const updateData = {
+    ...(data.name !== undefined && { name: data.name }),
+    ...(data.email !== undefined && { email: data.email }),
+  };
+
   return db.orm.public.User
     .select(
       "id",
@@ -100,15 +104,14 @@ export const updateUser = async (
       id: userId,
       organizationId,
     })
-    .update(data);
+    .update(updateData);
 };
-
 
 
 export const updateUserStatus = async (
   organizationId: number,
   userId: number,
-  data: UpdateUserStatusInput,
+  data: UpdateUserStatusRepositoryInput,
 ) => {
   return db.orm.public.User
     .select(

@@ -13,15 +13,15 @@ import {
 
 import { findUserById } from "../repositories/user.repository.js";
 
-import type { CreateTicketInput } from "../schemas/ticket.schema.ts";
-import { ticketStatusSchema } from "../schemas/ticket.schema.js";
-type TicketStatus = typeof ticketStatusSchema._output;
+import {
+  ticketStatusSchema,
+  type TicketStatus,
+  type CreateTicketInput,
+} from "../schemas/ticket.schema.js";
 
 import { NotFoundError } from "../errors/not-found.error.js";
 import { ConflictError } from "../errors/conflict.error.js";
 import { ValidationError } from "../errors/validation.error.js";
-
-import { isTicketStatus } from "../utils/ticket.js";
 
 
 // GET /tickets
@@ -45,14 +45,26 @@ export const createNewTicket = async (
   data: CreateTicketInput,
 ) => {
   if (data.assignedUserId !== undefined) {
-    const assignedUser = await findUserById(organizationId, data.assignedUserId);
+    const assignedUser = await findUserById(
+      organizationId,
+      data.assignedUserId,
+    );
+
     if (!assignedUser) {
-      throw new ValidationError("Assigned user does not belong to this organization");
+      throw new ValidationError(
+        "Assigned user does not belong to this organization",
+      );
     }
   }
 
   return db.transaction(async (tx) => {
-    const ticket = await createTicket(tx, { ...data, organizationId });
+    const ticket = await createTicket(
+      tx,
+      {
+        ...data,
+        organizationId,
+      },
+    );
 
     await createTicketHistory(tx, {
       organizationId,
@@ -93,10 +105,7 @@ export const updateTicket = async (
   ticketId: number,
   status: TicketStatus,
 ) => {
-  // Runtime validation.
-
   return db.transaction(async (tx) => {
-    // Find ticket inside the organization.
     const ticket = await findTicketByIdTx(
       tx,
       organizationId,
@@ -109,21 +118,16 @@ export const updateTicket = async (
       );
     }
 
-    // Validate status coming from database.
-    if (!isTicketStatus(ticket.status)) {
-      throw new Error(
-        "Invalid ticket status stored in database",
-      );
-    }
+    const oldStatus = ticketStatusSchema.parse(
+      ticket.status,
+    );
 
-    // Don't create history if nothing changed.
-    if (ticket.status === status) {
+    if (oldStatus === status) {
       throw new ConflictError(
         "Ticket already has this status",
       );
     }
 
-    // Update ticket.
     const updatedTicket = await updateTicketStatus(
       tx,
       organizationId,
@@ -137,21 +141,17 @@ export const updateTicket = async (
       );
     }
 
-    // Validate updated status.
-    if (!isTicketStatus(updatedTicket.status)) {
-      throw new Error(
-        "Invalid ticket status returned after update",
-      );
-    }
+    const newStatus = ticketStatusSchema.parse(
+      updatedTicket.status,
+    );
 
-    // Create audit history.
     await createTicketHistory(tx, {
       organizationId,
       ticketId: updatedTicket.id,
       userId,
       action: "STATUS_CHANGED",
-      oldStatus: ticket.status,
-      newStatus: updatedTicket.status,
+      oldStatus,
+      newStatus,
     });
 
     return updatedTicket;
@@ -166,16 +166,28 @@ export const deleteTicket = async (
   userId: number,
 ) => {
   return db.transaction(async (tx) => {
-    const ticket = await findTicketByIdTx(tx, organizationId, ticketId);
+    const ticket = await findTicketByIdTx(
+      tx,
+      organizationId,
+      ticketId,
+    );
 
     if (!ticket) {
-      throw new NotFoundError("Ticket not found");
+      throw new NotFoundError(
+        "Ticket not found",
+      );
     }
 
-    const deletedTicket = await softDeleteTicket(tx, organizationId, ticketId);
+    const deletedTicket = await softDeleteTicket(
+      tx,
+      organizationId,
+      ticketId,
+    );
 
     if (!deletedTicket) {
-      throw new Error("Ticket deletion failed");
+      throw new Error(
+        "Ticket deletion failed",
+      );
     }
 
     await createTicketHistory(tx, {

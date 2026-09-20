@@ -8,15 +8,12 @@ import {
   updateExistingUserStatus,
 } from "../services/user.service.js";
 
-export const getUsersController = async (
-  req: Request,
-  res: Response,
-) => {
-  // Temporary until authentication
+import { ValidationError } from "../errors/validation.error.js";
+import { createUserSchema, updateUserSchema, updateUserStatusSchema } from "../schemas/user.schema.js";
+
+export const getUsersController = async (req: Request, res: Response) => {
   const organizationId = 1;
-
   const users = await getUsers(organizationId);
-
   return res.json(users);
 };
 
@@ -24,35 +21,29 @@ export const getUserByIdController = async (
   req: Request<{ _id: string }>,
   res: Response,
 ) => {
-  // Temporary until authentication
   const organizationId = 1;
+  const userId = Number(req.params._id);
 
-  const userId = parseInt(req.params._id, 10);
+  if (!Number.isInteger(userId)) {
+    return res.status(400).json({ message: "Invalid user ID" });
+  }
 
-  const user = await getUserById(
-    organizationId,
-    userId,
-  );
-
+  const user = await getUserById(organizationId, userId);
   return res.json(user);
 };
 
-export const createUserController = async (
-  req: Request,
-  res: Response,
-) => {
-  // Temporary until authentication
+export const createUserController = async (req: Request, res: Response) => {
   const organizationId = 1;
 
-  const user = await createNewUser({
-    email: req.body.email,
-    username: req.body.username,
-    name: req.body.name,
-    password: req.body.password,
-    role: req.body.role,
-    status: req.body.status,
-    organizationId,
-  });
+  const parsed = createUserSchema.safeParse(req.body);
+
+  if (!parsed.success) {
+    throw new ValidationError(
+      parsed.error.issues.map((issue) => issue.message).join(", "),
+    );
+  }
+
+  const user = await createNewUser(organizationId, parsed.data);
 
   return res.status(201).json(user);
 };
@@ -61,83 +52,71 @@ export const updateUserController = async (
   req: Request<{ _id: string }>,
   res: Response,
 ) => {
-  // Temporary until authentication
   const organizationId = 1;
-
   const userId = Number(req.params._id);
 
-  const { name, email } = req.body;
+  if (!Number.isInteger(userId)) {
+    return res.status(400).json({ message: "Invalid user ID" });
+  }
 
-  const updatedUser = await updateExistingUser(
-    organizationId,
-    userId,
-    {
-      name,
-      email,
-    },
-  );
+  const parsed = updateUserSchema.safeParse(req.body);
+
+  if (!parsed.success) {
+    throw new ValidationError(
+      parsed.error.issues.map((issue) => issue.message).join(", "),
+    );
+  }
+
+  const updatedUser = await updateExistingUser(organizationId, userId, parsed.data);
 
   return res.status(200).json(updatedUser);
 };
-
 
 export const updateUserStatusController = async (
   req: Request<{ _id: string }>,
   res: Response,
 ) => {
-  // Temporary until authentication
   const organizationId = 1;
-
   const userId = Number(req.params._id);
 
-  const { status } = req.body;
+  if (!Number.isInteger(userId)) {
+    return res.status(400).json({ message: "Invalid user ID" });
+  }
 
-  const updatedUser = await updateExistingUserStatus(
-    organizationId,
-    userId,
-    {
-      status,
-    },
-  );
+  const parsed = updateUserStatusSchema.safeParse(req.body);
+
+  if (!parsed.success) {
+    throw new ValidationError(
+      parsed.error.issues.map((issue) => issue.message).join(", "),
+    );
+  }
+
+  const updatedUser = await updateExistingUserStatus(organizationId, userId, parsed.data);
 
   return res.status(200).json(updatedUser);
 };
 
-
-export const getCurrentUserController = async (
-  req: Request,
-  res: Response,
-) => {
-  // Temporary until authentication
+export const getCurrentUserController = async (req: Request, res: Response) => {
   const organizationId = 1;
   const userId = 1;
 
-  const user = await getUserById(
-    organizationId,
-    userId,
-  );
-
+  const user = await getUserById(organizationId, userId);
   return res.json(user);
 };
 
-export const updateCurrentUserController = async (
-  req: Request,
-  res: Response,
-) => {
-  // Temporary until authentication
+export const updateCurrentUserController = async (req: Request, res: Response) => {
   const organizationId = 1;
   const userId = 1;
 
-  const { name, email } = req.body;
+  const parsed = updateUserSchema.safeParse(req.body);
 
-  const updatedUser = await updateExistingUser(
-    organizationId,
-    userId,
-    {
-      name,
-      email,
-    },
-  );
+  if (!parsed.success) {
+    throw new ValidationError(
+      parsed.error.issues.map((issue) => issue.message).join(", "),
+    );
+  }
+
+  const updatedUser = await updateExistingUser(organizationId, userId, parsed.data);
 
   return res.status(200).json(updatedUser);
 };
