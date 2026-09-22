@@ -50,3 +50,16 @@ export const findOrganizationAccountByEmail = async (
     })
     .first();
 };
+
+
+export const findUserByUsername = async (
+  organizationId: number,
+  username: string,
+) => {
+  return db.orm.public.User
+    .where({
+      organizationId,
+      username,
+    })
+    .first();
+};

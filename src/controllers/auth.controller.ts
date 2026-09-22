@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 
-import { loginOrganization, registerOrganization } from "../services/auth.service.js";
-import { loginSchema, registerOrganizationSchema } from "../schemas/auth.schema.js";
+import { loginOrganization, loginUser, registerOrganization } from "../services/auth.service.js";
+import { loginSchema, registerOrganizationSchema, userLoginSchema } from "../schemas/auth.schema.js";
 import { ValidationError } from "../errors/validation.error.js";
 
 export const registerOrganizationController = async (
@@ -37,3 +37,21 @@ export const loginOrganizationController = async (
 
   return res.status(200).json(result);
 };
+
+export const loginUserController = async (
+  req: Request,
+  res: Response,
+) => {
+  const parsed = userLoginSchema.safeParse(req.body);
+
+  if (!parsed.success) {
+    throw new ValidationError(
+      parsed.error.issues.map((issue) => issue.message).join(", "),
+    );
+  }
+
+  const result = await loginUser(parsed.data);
+
+  return res.status(200).json(result);
+};
+

@@ -2,7 +2,6 @@ import { z } from "zod";
 
 // TODO: replace with your actual role values
 export const userRoleSchema = z.enum([
-  "ADMIN",
   "TICKET_HANDLER",
 ]);
 

@@ -4,12 +4,14 @@ import {
   createOrganization,
   createOrganizationAccount,
   findOrganizationAccountByEmail,
+  findUserByUsername,
 } from "../repositories/auth.repository.js";
 
 import { hashPassword, verifyPassword } from "../utils/password.js";
 
-import type { LoginInput, RegisterOrganizationInput } from "../schemas/auth.schema.js";
+import type { LoginInput, RegisterOrganizationInput, UserLoginInput } from "../schemas/auth.schema.js";
 import { UnauthorizedError } from "../errors/unauthorized.error.js";
+import { generateAccessToken } from "../utils/jwt.js";
 
 export const registerOrganization = async (
   data: RegisterOrganizationInput,
@@ -58,11 +60,63 @@ export const loginOrganization = async (data: LoginInput) => {
     throw new UnauthorizedError("Invalid email or password");
   }
 
+  const accessToken = generateAccessToken({
+    sub: String(account.id),
+    organizationId: account.organizationId,
+    actorType: "ORGANIZATION_ACCOUNT",
+  });
+
   return {
+    accessToken,
     account: {
       id: account.id,
       email: account.email,
       organizationId: account.organizationId,
+    },
+  
+  };
+};
+
+
+export const loginUser = async (data: UserLoginInput) => {
+  const user = await findUserByUsername(
+    data.organizationId,
+    data.username,
+  );
+
+  if (!user) {
+    throw new UnauthorizedError("Invalid username or password");
+  }
+
+  const isPasswordValid = await verifyPassword(
+    data.password,
+    user.passwordHash,
+  );
+
+  if (!isPasswordValid) {
+    throw new UnauthorizedError("Invalid username or password");
+  }
+
+  if (user.status !== "ACTIVE") {
+    throw new UnauthorizedError("User account is disabled");
+  }
+
+  const accessToken = generateAccessToken({
+    sub: String(user.id),
+    organizationId: user.organizationId,
+    actorType: "USER",
+  });
+
+  return {
+    accessToken,
+    user: {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      status: user.status,
+      organizationId: user.organizationId,
     },
   };
 };
