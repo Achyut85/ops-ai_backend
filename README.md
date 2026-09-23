@@ -185,8 +185,9 @@ src/
   tests/         API and password tests
 ```
 
-## Current limitations
+## Current status
 
-- Authentication services and JWT verification are implemented, but the resource routes are not yet mounted with `authenticate` middleware.
-- User and ticket controllers currently use organization ID `1`; current-user and ticket mutations also use user ID `1`. Replace these placeholders with values from `req.auth` before treating the API as production-ready.
-- Integration tests use the configured database. Use a dedicated test database so test records do not mix with development or production data.
+- Authentication and JWT verification are implemented and enforced on the user routes under `/users`.
+- Ticket routes are still not protected by `authenticate` middleware and currently use placeholder organization/user values (`1`) in the controller layer.
+- User-related controllers already read `req.auth` for organization scope and current-user identity, but the ticket flow still needs to be migrated to the authenticated actor context before this is production-ready.
+- Integration tests run against the configured database; for a safer workflow, use a dedicated test database so test records do not mix with development or production data.
