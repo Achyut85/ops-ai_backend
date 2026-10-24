@@ -9,6 +9,9 @@ import {
   createTicketHistory,
   softDeleteTicket,
   findTicketHistory,
+  findTicketsAssignedToUser,
+  findTicketForHistory,
+  updateTicketAssignment,
 } from "../repositories/ticket.repository.js";
 
 import { findUserById } from "../repositories/user.repository.js";
@@ -22,6 +25,7 @@ import {
 import { NotFoundError } from "../errors/not-found.error.js";
 import { ConflictError } from "../errors/conflict.error.js";
 import { ValidationError } from "../errors/validation.error.js";
+import type { ActorType } from "../types/auth.types.js";
 
 
 // GET /tickets
@@ -37,11 +41,19 @@ export const getTickets = async (
   );
 };
 
+export const getTicketsAssignedToUser = async (
+  organizationId: number,
+  userId: number,
+) => {
+  return findTicketsAssignedToUser(organizationId, userId);
+};
+
 
 // POST /tickets
 export const createNewTicket = async (
   organizationId: number,
   userId: number,
+  actorType: ActorType,
   data: CreateTicketInput,
 ) => {
   if (data.assignedUserId !== undefined) {
@@ -69,8 +81,10 @@ export const createNewTicket = async (
     await createTicketHistory(tx, {
       organizationId,
       ticketId: ticket.id,
-      userId,
+      actorId: userId,
+      actorType,
       action: "CREATED",
+      newAssignedUserId: data.assignedUserId ?? null,
     });
 
     return ticket;
@@ -82,6 +96,8 @@ export const createNewTicket = async (
 export const getTicketById = async (
   organizationId: number,
   ticketId: number,
+  actorId: number,
+  actorType: ActorType,
 ) => {
   const ticket = await findTicketById(
     organizationId,
@@ -94,6 +110,10 @@ export const getTicketById = async (
     );
   }
 
+  if (actorType === "USER" && ticket.assignedUserId !== actorId) {
+    throw new NotFoundError("Ticket not found");
+  }
+
   return ticket;
 };
 
@@ -102,6 +122,7 @@ export const getTicketById = async (
 export const updateTicket = async (
   organizationId: number,
   userId: number,
+  actorType: ActorType,
   ticketId: number,
   status: TicketStatus,
 ) => {
@@ -116,6 +137,10 @@ export const updateTicket = async (
       throw new NotFoundError(
         "Ticket not found",
       );
+    }
+
+    if (actorType === "USER" && ticket.assignedUserId !== userId) {
+      throw new NotFoundError("Ticket not found");
     }
 
     const oldStatus = ticketStatusSchema.parse(
@@ -148,7 +173,8 @@ export const updateTicket = async (
     await createTicketHistory(tx, {
       organizationId,
       ticketId: updatedTicket.id,
-      userId,
+      actorId: userId,
+      actorType,
       action: "STATUS_CHANGED",
       oldStatus,
       newStatus,
@@ -164,6 +190,7 @@ export const deleteTicket = async (
   organizationId: number,
   ticketId: number,
   userId: number,
+  actorType: ActorType,
 ) => {
   return db.transaction(async (tx) => {
     const ticket = await findTicketByIdTx(
@@ -193,11 +220,64 @@ export const deleteTicket = async (
     await createTicketHistory(tx, {
       organizationId,
       ticketId,
-      userId,
+      actorId: userId,
+      actorType,
       action: "DELETED",
     });
 
     return deletedTicket;
+  });
+};
+
+export const updateTicketAssignmentForOrganization = async (
+  organizationId: number,
+  actorId: number,
+  ticketId: number,
+  assignedUserId: number | null,
+) => {
+  if (assignedUserId !== null) {
+    const assignedUser = await findUserById(organizationId, assignedUserId);
+
+    if (!assignedUser) {
+      throw new ValidationError(
+        "Assigned user does not belong to this organization",
+      );
+    }
+  }
+
+  return db.transaction(async (tx) => {
+    const ticket = await findTicketByIdTx(tx, organizationId, ticketId);
+
+    if (!ticket) {
+      throw new NotFoundError("Ticket not found");
+    }
+
+    if (ticket.assignedUserId === assignedUserId) {
+      throw new ConflictError("Ticket already has this assignee");
+    }
+
+    const updatedTicket = await updateTicketAssignment(
+      tx,
+      organizationId,
+      ticketId,
+      assignedUserId,
+    );
+
+    if (!updatedTicket) {
+      throw new Error("Ticket assignment update failed");
+    }
+
+    await createTicketHistory(tx, {
+      organizationId,
+      ticketId,
+      actorId,
+      actorType: "ORGANIZATION_ACCOUNT",
+      action: assignedUserId === null ? "UNASSIGNED" : "ASSIGNED",
+      oldAssignedUserId: ticket.assignedUserId,
+      newAssignedUserId: assignedUserId,
+    });
+
+    return updatedTicket;
   });
 };
 
@@ -206,7 +286,15 @@ export const deleteTicket = async (
 export const getTicketHistory = async (
   organizationId: number,
   ticketId: number,
+  actorId: number,
+  actorType: ActorType,
 ) => {
+  const ticket = await findTicketForHistory(organizationId, ticketId);
+
+  if (!ticket || (actorType === "USER" && ticket.assignedUserId !== actorId)) {
+    throw new NotFoundError("Ticket not found");
+  }
+
   return findTicketHistory(
     organizationId,
     ticketId,

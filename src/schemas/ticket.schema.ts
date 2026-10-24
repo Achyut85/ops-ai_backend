@@ -21,6 +21,10 @@ export const updateTicketSchema = z.object({
   status: ticketStatusSchema,
 });
 
+export const updateTicketAssignmentSchema = z.object({
+  assignedUserId: z.number().int().positive().nullable(),
+});
+
 export const ticketQuerySchema = z.object({
   assignedUserId: z.coerce
     .number({
@@ -35,4 +39,7 @@ export const ticketQuerySchema = z.object({
 
 export type CreateTicketInput = z.infer<typeof createTicketSchema>;
 export type UpdateTicketInput = z.infer<typeof updateTicketSchema>;
+export type UpdateTicketAssignmentInput = z.infer<
+  typeof updateTicketAssignmentSchema
+>;
 export type TicketStatus = z.infer<typeof ticketStatusSchema>;

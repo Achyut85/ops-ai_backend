@@ -32,6 +32,13 @@ export const findTickets = async (
     .all();
 };
 
+export const findTicketsAssignedToUser = async (
+  organizationId: number,
+  userId: number,
+) => {
+  return findTickets(organizationId, userId);
+};
+
 
 export const findTicketById = async (
   organizationId: number,
@@ -42,6 +49,18 @@ export const findTicketById = async (
       id: ticketId,
       organizationId,
       deletedAt: null,
+    })
+    .first();
+};
+
+export const findTicketForHistory = async (
+  organizationId: number,
+  ticketId: number,
+) => {
+  return db.orm.public.Ticket
+    .where({
+      id: ticketId,
+      organizationId,
     })
     .first();
 };
@@ -96,6 +115,23 @@ export const updateTicketStatus = async (
     });
 };
 
+export const updateTicketAssignment = async (
+  tx: TransactionClient,
+  organizationId: number,
+  ticketId: number,
+  assignedUserId: number | null,
+) => {
+  return tx.orm.public.Ticket
+    .where({
+      id: ticketId,
+      organizationId,
+      deletedAt: null,
+    })
+    .update({
+      assignedUserId,
+    });
+};
+
 
 // PATCH /tickets/:id
 // Create history inside transaction
@@ -106,10 +142,13 @@ export const createTicketHistory = async (
   return tx.orm.public.TicketHistory.create({
     organizationId: data.organizationId,
     ticketId: data.ticketId,
-    userId: data.userId,
+    actorId: data.actorId,
+    actorType: data.actorType,
     action: data.action,
     oldStatus: data.oldStatus ?? null,
     newStatus: data.newStatus ?? null,
+    oldAssignedUserId: data.oldAssignedUserId ?? null,
+    newAssignedUserId: data.newAssignedUserId ?? null,
   });
 };
 // DELETE /tickets/:id

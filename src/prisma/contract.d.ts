@@ -33,7 +33,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'dfd102f7ed4f78a97ca3a8bb151c8852459f02ccb73e2e611c8473ec027360c6'>;
+  StorageHashBase<'28c0a255c9949ced04ee6655f7c7a2e24aa9c7512a245060d11db0dd417a3476'>;
 export type ExecutionHash =
   ExecutionHashBase<'24941c1c510e186fb4381dc5525fa04c1df2ab75551ceb439658b166487381da'>;
 export type ProfileHash =
@@ -255,6 +255,18 @@ export type FieldOutputTypes = {
       readonly createdAt: CodecTypes['pg/timestamptz-string@1']['output'];
       readonly updatedAt: CodecTypes['pg/timestamptz-string@1']['output'];
     };
+    readonly RefreshSession: {
+      readonly id: CodecTypes['pg/int4@1']['output'];
+      readonly familyId: CodecTypes['pg/text@1']['output'];
+      readonly tokenHash: CodecTypes['pg/text@1']['output'];
+      readonly actorId: CodecTypes['pg/int4@1']['output'];
+      readonly actorType: CodecTypes['pg/text@1']['output'];
+      readonly organizationId: CodecTypes['pg/int4@1']['output'];
+      readonly expiresAt: CodecTypes['pg/timestamptz-string@1']['output'];
+      readonly absoluteExpiresAt: CodecTypes['pg/timestamptz-string@1']['output'] | null;
+      readonly revokedAt: CodecTypes['pg/timestamptz-string@1']['output'] | null;
+      readonly createdAt: CodecTypes['pg/timestamptz-string@1']['output'];
+    };
     readonly Ticket: {
       readonly id: CodecTypes['pg/int4@1']['output'];
       readonly title: CodecTypes['pg/text@1']['output'];
@@ -270,10 +282,13 @@ export type FieldOutputTypes = {
       readonly id: CodecTypes['pg/int4@1']['output'];
       readonly organizationId: CodecTypes['pg/int4@1']['output'];
       readonly ticketId: CodecTypes['pg/int4@1']['output'];
-      readonly userId: CodecTypes['pg/int4@1']['output'];
+      readonly actorId: CodecTypes['pg/int4@1']['output'];
+      readonly actorType: CodecTypes['pg/text@1']['output'];
       readonly action: CodecTypes['pg/text@1']['output'];
       readonly oldStatus: CodecTypes['pg/text@1']['output'] | null;
       readonly newStatus: CodecTypes['pg/text@1']['output'] | null;
+      readonly oldAssignedUserId: CodecTypes['pg/int4@1']['output'] | null;
+      readonly newAssignedUserId: CodecTypes['pg/int4@1']['output'] | null;
       readonly createdAt: CodecTypes['pg/timestamptz-string@1']['output'];
     };
     readonly User: {
@@ -306,6 +321,18 @@ export type FieldInputTypes = {
       readonly createdAt: CodecTypes['pg/timestamptz-string@1']['input'];
       readonly updatedAt: CodecTypes['pg/timestamptz-string@1']['input'];
     };
+    readonly RefreshSession: {
+      readonly id: CodecTypes['pg/int4@1']['input'];
+      readonly familyId: CodecTypes['pg/text@1']['input'];
+      readonly tokenHash: CodecTypes['pg/text@1']['input'];
+      readonly actorId: CodecTypes['pg/int4@1']['input'];
+      readonly actorType: CodecTypes['pg/text@1']['input'];
+      readonly organizationId: CodecTypes['pg/int4@1']['input'];
+      readonly expiresAt: CodecTypes['pg/timestamptz-string@1']['input'];
+      readonly absoluteExpiresAt: CodecTypes['pg/timestamptz-string@1']['input'] | null;
+      readonly revokedAt: CodecTypes['pg/timestamptz-string@1']['input'] | null;
+      readonly createdAt: CodecTypes['pg/timestamptz-string@1']['input'];
+    };
     readonly Ticket: {
       readonly id: CodecTypes['pg/int4@1']['input'];
       readonly title: CodecTypes['pg/text@1']['input'];
@@ -321,10 +348,13 @@ export type FieldInputTypes = {
       readonly id: CodecTypes['pg/int4@1']['input'];
       readonly organizationId: CodecTypes['pg/int4@1']['input'];
       readonly ticketId: CodecTypes['pg/int4@1']['input'];
-      readonly userId: CodecTypes['pg/int4@1']['input'];
+      readonly actorId: CodecTypes['pg/int4@1']['input'];
+      readonly actorType: CodecTypes['pg/text@1']['input'];
       readonly action: CodecTypes['pg/text@1']['input'];
       readonly oldStatus: CodecTypes['pg/text@1']['input'] | null;
       readonly newStatus: CodecTypes['pg/text@1']['input'] | null;
+      readonly oldAssignedUserId: CodecTypes['pg/int4@1']['input'] | null;
+      readonly newAssignedUserId: CodecTypes['pg/int4@1']['input'] | null;
       readonly createdAt: CodecTypes['pg/timestamptz-string@1']['input'];
     };
     readonly User: {
@@ -357,6 +387,18 @@ export type StorageColumnTypes = {
       readonly passwordHash: CodecTypes['pg/text@1']['output'];
       readonly updatedAt: CodecTypes['pg/timestamptz-string@1']['output'];
     };
+    readonly refreshSession: {
+      readonly absoluteExpiresAt: CodecTypes['pg/timestamptz-string@1']['output'] | null;
+      readonly actorId: CodecTypes['pg/int4@1']['output'];
+      readonly actorType: CodecTypes['pg/text@1']['output'];
+      readonly createdAt: CodecTypes['pg/timestamptz-string@1']['output'];
+      readonly expiresAt: CodecTypes['pg/timestamptz-string@1']['output'];
+      readonly familyId: CodecTypes['pg/text@1']['output'];
+      readonly id: CodecTypes['pg/int4@1']['output'];
+      readonly organizationId: CodecTypes['pg/int4@1']['output'];
+      readonly revokedAt: CodecTypes['pg/timestamptz-string@1']['output'] | null;
+      readonly tokenHash: CodecTypes['pg/text@1']['output'];
+    };
     readonly ticket: {
       readonly assignedUserId: CodecTypes['pg/int4@1']['output'] | null;
       readonly createdAt: CodecTypes['pg/timestamptz-string@1']['output'];
@@ -370,13 +412,16 @@ export type StorageColumnTypes = {
     };
     readonly ticketHistory: {
       readonly action: CodecTypes['pg/text@1']['output'];
+      readonly actorId: CodecTypes['pg/int4@1']['output'];
+      readonly actorType: CodecTypes['pg/text@1']['output'];
       readonly createdAt: CodecTypes['pg/timestamptz-string@1']['output'];
       readonly id: CodecTypes['pg/int4@1']['output'];
+      readonly newAssignedUserId: CodecTypes['pg/int4@1']['output'] | null;
       readonly newStatus: CodecTypes['pg/text@1']['output'] | null;
+      readonly oldAssignedUserId: CodecTypes['pg/int4@1']['output'] | null;
       readonly oldStatus: CodecTypes['pg/text@1']['output'] | null;
       readonly organizationId: CodecTypes['pg/int4@1']['output'];
       readonly ticketId: CodecTypes['pg/int4@1']['output'];
-      readonly userId: CodecTypes['pg/int4@1']['output'];
     };
     readonly user: {
       readonly createdAt: CodecTypes['pg/timestamptz-string@1']['output'];
@@ -408,6 +453,18 @@ export type StorageColumnInputTypes = {
       readonly passwordHash: CodecTypes['pg/text@1']['input'];
       readonly updatedAt: CodecTypes['pg/timestamptz-string@1']['input'];
     };
+    readonly refreshSession: {
+      readonly absoluteExpiresAt: CodecTypes['pg/timestamptz-string@1']['input'] | null;
+      readonly actorId: CodecTypes['pg/int4@1']['input'];
+      readonly actorType: CodecTypes['pg/text@1']['input'];
+      readonly createdAt: CodecTypes['pg/timestamptz-string@1']['input'];
+      readonly expiresAt: CodecTypes['pg/timestamptz-string@1']['input'];
+      readonly familyId: CodecTypes['pg/text@1']['input'];
+      readonly id: CodecTypes['pg/int4@1']['input'];
+      readonly organizationId: CodecTypes['pg/int4@1']['input'];
+      readonly revokedAt: CodecTypes['pg/timestamptz-string@1']['input'] | null;
+      readonly tokenHash: CodecTypes['pg/text@1']['input'];
+    };
     readonly ticket: {
       readonly assignedUserId: CodecTypes['pg/int4@1']['input'] | null;
       readonly createdAt: CodecTypes['pg/timestamptz-string@1']['input'];
@@ -421,13 +478,16 @@ export type StorageColumnInputTypes = {
     };
     readonly ticketHistory: {
       readonly action: CodecTypes['pg/text@1']['input'];
+      readonly actorId: CodecTypes['pg/int4@1']['input'];
+      readonly actorType: CodecTypes['pg/text@1']['input'];
       readonly createdAt: CodecTypes['pg/timestamptz-string@1']['input'];
       readonly id: CodecTypes['pg/int4@1']['input'];
+      readonly newAssignedUserId: CodecTypes['pg/int4@1']['input'] | null;
       readonly newStatus: CodecTypes['pg/text@1']['input'] | null;
+      readonly oldAssignedUserId: CodecTypes['pg/int4@1']['input'] | null;
       readonly oldStatus: CodecTypes['pg/text@1']['input'] | null;
       readonly organizationId: CodecTypes['pg/int4@1']['input'];
       readonly ticketId: CodecTypes['pg/int4@1']['input'];
-      readonly userId: CodecTypes['pg/int4@1']['input'];
     };
     readonly user: {
       readonly createdAt: CodecTypes['pg/timestamptz-string@1']['input'];
@@ -553,6 +613,88 @@ type ContractBase = Omit<
                 },
               ];
             };
+            readonly refreshSession: {
+              columns: {
+                readonly id: {
+                  readonly nativeType: 'int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'function';
+                    readonly expression: 'autoincrement()';
+                  };
+                };
+                readonly familyId: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                };
+                readonly tokenHash: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                };
+                readonly actorId: {
+                  readonly nativeType: 'int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                };
+                readonly actorType: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                };
+                readonly organizationId: {
+                  readonly nativeType: 'int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                };
+                readonly expiresAt: {
+                  readonly nativeType: 'timestamptz';
+                  readonly codecId: 'pg/timestamptz-string@1';
+                  readonly nullable: false;
+                };
+                readonly absoluteExpiresAt: {
+                  readonly nativeType: 'timestamptz';
+                  readonly codecId: 'pg/timestamptz-string@1';
+                  readonly nullable: true;
+                };
+                readonly revokedAt: {
+                  readonly nativeType: 'timestamptz';
+                  readonly codecId: 'pg/timestamptz-string@1';
+                  readonly nullable: true;
+                };
+                readonly createdAt: {
+                  readonly nativeType: 'timestamptz';
+                  readonly codecId: 'pg/timestamptz-string@1';
+                  readonly nullable: false;
+                  readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
+                };
+              };
+              primaryKey: { readonly columns: readonly ['id'] };
+              uniques: readonly [{ readonly columns: readonly ['tokenHash'] }];
+              indexes: readonly [
+                {
+                  readonly name: 'refreshSession_familyId_idx_3d03045e';
+                  readonly prefix: 'refreshSession_familyId_idx';
+                  readonly columns: readonly ['familyId'];
+                  readonly unique: false;
+                },
+                {
+                  readonly name: 'refreshSession_actorId_actorType_organizationId_idx_c76db2e8';
+                  readonly prefix: 'refreshSession_actorId_actorType_organizationId_idx';
+                  readonly columns: readonly ['actorId', 'actorType', 'organizationId'];
+                  readonly unique: false;
+                },
+                {
+                  readonly name: 'refreshSession_expiresAt_idx_6b6b8c10';
+                  readonly prefix: 'refreshSession_expiresAt_idx';
+                  readonly columns: readonly ['expiresAt'];
+                  readonly unique: false;
+                },
+              ];
+              foreignKeys: readonly [];
+            };
             readonly ticket: {
               columns: {
                 readonly id: {
@@ -670,9 +812,14 @@ type ContractBase = Omit<
                   readonly codecId: 'pg/int4@1';
                   readonly nullable: false;
                 };
-                readonly userId: {
+                readonly actorId: {
                   readonly nativeType: 'int4';
                   readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                };
+                readonly actorType: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
                   readonly nullable: false;
                 };
                 readonly action: {
@@ -688,6 +835,16 @@ type ContractBase = Omit<
                 readonly newStatus: {
                   readonly nativeType: 'text';
                   readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                };
+                readonly oldAssignedUserId: {
+                  readonly nativeType: 'int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: true;
+                };
+                readonly newAssignedUserId: {
+                  readonly nativeType: 'int4';
+                  readonly codecId: 'pg/int4@1';
                   readonly nullable: true;
                 };
                 readonly createdAt: {
@@ -710,12 +867,6 @@ type ContractBase = Omit<
                   readonly name: 'ticketHistory_ticketId_idx_2fe526c3';
                   readonly prefix: 'ticketHistory_ticketId_idx';
                   readonly columns: readonly ['ticketId'];
-                  readonly unique: false;
-                },
-                {
-                  readonly name: 'ticketHistory_userId_idx_a489d58a';
-                  readonly prefix: 'ticketHistory_userId_idx';
-                  readonly columns: readonly ['userId'];
                   readonly unique: false;
                 },
               ];
@@ -741,18 +892,6 @@ type ContractBase = Omit<
                   readonly target: {
                     readonly namespaceId: 'public' & NamespaceId;
                     readonly tableName: 'ticket';
-                    readonly columns: readonly ['id'];
-                  };
-                },
-                {
-                  readonly source: {
-                    readonly namespaceId: 'public' & NamespaceId;
-                    readonly tableName: 'ticketHistory';
-                    readonly columns: readonly ['userId'];
-                  };
-                  readonly target: {
-                    readonly namespaceId: 'public' & NamespaceId;
-                    readonly tableName: 'user';
                     readonly columns: readonly ['id'];
                   };
                 },
@@ -865,6 +1004,10 @@ type ContractBase = Omit<
     readonly ticketHistory: {
       readonly namespace: 'public' & NamespaceId;
       readonly model: 'TicketHistory';
+    };
+    readonly refreshSession: {
+      readonly namespace: 'public' & NamespaceId;
+      readonly model: 'RefreshSession';
     };
   };
   readonly domain: {
@@ -998,6 +1141,79 @@ type ContractBase = Omit<
               };
             };
           };
+          readonly RefreshSession: {
+            readonly fields: {
+              readonly id: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly familyId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly tokenHash: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly actorId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly actorType: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly organizationId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly expiresAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-string@1';
+                };
+              };
+              readonly absoluteExpiresAt: {
+                readonly nullable: true;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-string@1';
+                };
+              };
+              readonly revokedAt: {
+                readonly nullable: true;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-string@1';
+                };
+              };
+              readonly createdAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-string@1';
+                };
+              };
+            };
+            readonly relations: Record<string, never>;
+            readonly storage: {
+              readonly table: 'refreshSession';
+              readonly namespaceId: 'public';
+              readonly fields: {
+                readonly id: { readonly column: 'id' };
+                readonly familyId: { readonly column: 'familyId' };
+                readonly tokenHash: { readonly column: 'tokenHash' };
+                readonly actorId: { readonly column: 'actorId' };
+                readonly actorType: { readonly column: 'actorType' };
+                readonly organizationId: { readonly column: 'organizationId' };
+                readonly expiresAt: { readonly column: 'expiresAt' };
+                readonly absoluteExpiresAt: { readonly column: 'absoluteExpiresAt' };
+                readonly revokedAt: { readonly column: 'revokedAt' };
+                readonly createdAt: { readonly column: 'createdAt' };
+              };
+            };
+          };
           readonly Ticket: {
             readonly fields: {
               readonly id: {
@@ -1108,9 +1324,13 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
               };
-              readonly userId: {
+              readonly actorId: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly actorType: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
               readonly action: {
                 readonly nullable: false;
@@ -1123,6 +1343,14 @@ type ContractBase = Omit<
               readonly newStatus: {
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly oldAssignedUserId: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly newAssignedUserId: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
               };
               readonly createdAt: {
                 readonly nullable: false;
@@ -1155,14 +1383,6 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['id'];
                 };
               };
-              readonly user: {
-                readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'User' };
-                readonly cardinality: 'N:1';
-                readonly on: {
-                  readonly localFields: readonly ['userId'];
-                  readonly targetFields: readonly ['id'];
-                };
-              };
             };
             readonly storage: {
               readonly table: 'ticketHistory';
@@ -1171,10 +1391,13 @@ type ContractBase = Omit<
                 readonly id: { readonly column: 'id' };
                 readonly organizationId: { readonly column: 'organizationId' };
                 readonly ticketId: { readonly column: 'ticketId' };
-                readonly userId: { readonly column: 'userId' };
+                readonly actorId: { readonly column: 'actorId' };
+                readonly actorType: { readonly column: 'actorType' };
                 readonly action: { readonly column: 'action' };
                 readonly oldStatus: { readonly column: 'oldStatus' };
                 readonly newStatus: { readonly column: 'newStatus' };
+                readonly oldAssignedUserId: { readonly column: 'oldAssignedUserId' };
+                readonly newAssignedUserId: { readonly column: 'newAssignedUserId' };
                 readonly createdAt: { readonly column: 'createdAt' };
               };
             };
@@ -1249,17 +1472,6 @@ type ContractBase = Omit<
                 readonly on: {
                   readonly localFields: readonly ['organizationId'];
                   readonly targetFields: readonly ['id'];
-                };
-              };
-              readonly ticketHistory: {
-                readonly to: {
-                  readonly namespace: 'public' & NamespaceId;
-                  readonly model: 'TicketHistory';
-                };
-                readonly cardinality: '1:N';
-                readonly on: {
-                  readonly localFields: readonly ['id'];
-                  readonly targetFields: readonly ['userId'];
                 };
               };
             };

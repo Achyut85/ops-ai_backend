@@ -1,4 +1,5 @@
-// use prisma-next
+
+ // use prisma-next
 
 model Organization {
   id        Int               @id @default(autoincrement())
@@ -37,7 +38,6 @@ model User {
   organization    Organization      @relation(fields: [organizationId], references: [id])
 
   assignedTickets Ticket[]
-  ticketHistory   TicketHistory[]
 
   createdAt       TimestamptzString @default(now())
   updatedAt       temporal.updatedAtString()
@@ -79,15 +79,31 @@ model TicketHistory {
     references: [id]
   )
 
-  userId         Int
-  user           User              @relation(
-    fields: [userId],
-    references: [id]
-  )
+  actorId        Int
+  actorType      String
 
   action         String
   oldStatus      String?
   newStatus      String?
+  oldAssignedUserId Int?
+  newAssignedUserId Int?
 
   createdAt      TimestamptzString @default(now())
+}
+
+model RefreshSession {
+  id             Int               @id @default(autoincrement())
+  familyId       String
+  tokenHash      String            @unique
+  actorId        Int
+  actorType      String
+  organizationId Int
+  expiresAt      TimestamptzString
+  absoluteExpiresAt TimestamptzString?
+  revokedAt      TimestamptzString?
+  createdAt      TimestamptzString @default(now())
+
+  @@index([familyId])
+  @@index([actorId, actorType, organizationId])
+  @@index([expiresAt])
 }

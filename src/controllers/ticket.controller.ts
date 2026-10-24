@@ -2,9 +2,11 @@ import type { Request, Response } from "express";
 
 import {
   getTickets,
+  getTicketsAssignedToUser,
   createNewTicket,
   getTicketById,
   updateTicket,
+  updateTicketAssignmentForOrganization,
   deleteTicket,
   getTicketHistory,
 } from "../services/ticket.service.js";
@@ -13,17 +15,30 @@ import { ValidationError } from "../errors/validation.error.js";
 
 import {
   createTicketSchema,
+  updateTicketAssignmentSchema,
   updateTicketSchema,
   ticketQuerySchema,
 } from "../schemas/ticket.schema.js";
 
+export const getMyTicketsController = async (
+  req: Request,
+  res: Response,
+) => {
+  const { organizationId, sub } = req.auth!;
+  const tickets = await getTicketsAssignedToUser(
+    organizationId,
+    Number(sub),
+  );
+
+  return res.json(tickets);
+};
 
 // GET /tickets
 export const getTicketsController = async (
   req: Request,
   res: Response,
 ) => {
-  const organizationId = 1;
+  const organizationId = req.auth!.organizationId;
 
   const parsed = ticketQuerySchema.safeParse(
     req.query,
@@ -52,8 +67,7 @@ export const createTicketController = async (
   req: Request,
   res: Response,
 ) => {
-  const organizationId = 1;
-  const userId = 1;
+  const { organizationId, sub, actorType } = req.auth!;
 
   const parsed = createTicketSchema.safeParse(
     req.body,
@@ -69,7 +83,8 @@ export const createTicketController = async (
 
   const ticket = await createNewTicket(
     organizationId,
-    userId,
+    Number(sub),
+    actorType,
     parsed.data,
   );
 
@@ -82,7 +97,7 @@ export const getTicketByIdController = async (
   req: Request<{ _id: string }>,
   res: Response,
 ) => {
-  const organizationId = 1;
+  const organizationId = req.auth!.organizationId;
 
   const ticketId = Number(req.params._id);
 
@@ -95,6 +110,8 @@ export const getTicketByIdController = async (
   const ticket = await getTicketById(
     organizationId,
     ticketId,
+    Number(req.auth!.sub),
+    req.auth!.actorType,
   );
 
   return res.json(ticket);
@@ -106,8 +123,7 @@ export const updateTicketController = async (
   req: Request<{ _id: string }>,
   res: Response,
 ) => {
-  const organizationId = 1;
-  const userId = 1;
+  const { organizationId, sub, actorType } = req.auth!;
 
   const ticketId = Number(req.params._id);
 
@@ -131,12 +147,44 @@ export const updateTicketController = async (
 
   const updatedTicket = await updateTicket(
     organizationId,
-    userId,
+    Number(sub),
+    actorType,
     ticketId,
     parsed.data.status,
   );
 
   return res.json(updatedTicket);
+};
+
+export const updateTicketAssignmentController = async (
+  req: Request<{ _id: string }>,
+  res: Response,
+) => {
+  const { organizationId, sub } = req.auth!;
+  const ticketId = Number(req.params._id);
+
+  if (!Number.isInteger(ticketId)) {
+    return res.status(400).json({
+      message: "Invalid ticket ID",
+    });
+  }
+
+  const parsed = updateTicketAssignmentSchema.safeParse(req.body);
+
+  if (!parsed.success) {
+    throw new ValidationError(
+      parsed.error.issues.map((issue) => issue.message).join(", "),
+    );
+  }
+
+  const ticket = await updateTicketAssignmentForOrganization(
+    organizationId,
+    Number(sub),
+    ticketId,
+    parsed.data.assignedUserId,
+  );
+
+  return res.json(ticket);
 };
 
 
@@ -145,8 +193,7 @@ export const deleteTicketController = async (
   req: Request<{ _id: string }>,
   res: Response,
 ) => {
-  const organizationId = 1;
-  const userId = 1;
+  const { organizationId, sub, actorType } = req.auth!;
 
   const ticketId = Number(req.params._id);
 
@@ -159,7 +206,8 @@ export const deleteTicketController = async (
   await deleteTicket(
     organizationId,
     ticketId,
-    userId,
+    Number(sub),
+    actorType,
   );
 
   return res.json({
@@ -173,7 +221,7 @@ export const getTicketHistoryController = async (
   req: Request<{ _id: string }>,
   res: Response,
 ) => {
-  const organizationId = 1;
+  const organizationId = req.auth!.organizationId;
 
   const ticketId = Number(req.params._id);
 
@@ -186,6 +234,8 @@ export const getTicketHistoryController = async (
   const history = await getTicketHistory(
     organizationId,
     ticketId,
+    Number(req.auth!.sub),
+    req.auth!.actorType,
   );
 
   return res.json(history);

@@ -1,8 +1,19 @@
 import type { Request, Response } from "express";
 
 import { loginOrganization, loginUser, registerOrganization } from "../services/auth.service.js";
+import {
+  logoutAllSessions,
+  logoutSession,
+  refreshSession,
+} from "../services/auth.service.js";
 import { loginSchema, registerOrganizationSchema, userLoginSchema } from "../schemas/auth.schema.js";
 import { ValidationError } from "../errors/validation.error.js";
+import { UnauthorizedError } from "../errors/unauthorized.error.js";
+import {
+  clearRefreshCookie,
+  getRefreshCookie,
+  setRefreshCookie,
+} from "../utils/auth-cookie.js";
 
 export const registerOrganizationController = async (
   req: Request,
@@ -33,8 +44,10 @@ export const loginOrganizationController = async (
     );
   }
 
-  const result = await loginOrganization(parsed.data);
+  const { refreshToken, refreshExpiresAt, ...result } =
+    await loginOrganization(parsed.data);
 
+  setRefreshCookie(res, refreshToken, refreshExpiresAt);
   return res.status(200).json(result);
 };
 
@@ -50,8 +63,56 @@ export const loginUserController = async (
     );
   }
 
-  const result = await loginUser(parsed.data);
+  const { refreshToken, refreshExpiresAt, ...result } =
+    await loginUser(parsed.data);
 
+  setRefreshCookie(res, refreshToken, refreshExpiresAt);
   return res.status(200).json(result);
 };
 
+export const refreshSessionController = async (
+  req: Request,
+  res: Response,
+) => {
+  try {
+    const refreshToken = getRefreshCookie(req);
+
+    if (!refreshToken) {
+      throw new UnauthorizedError("Refresh token required");
+    }
+
+    const {
+      refreshToken: nextRefreshToken,
+      refreshExpiresAt,
+      accessToken,
+    } =
+      await refreshSession(refreshToken);
+
+    setRefreshCookie(res, nextRefreshToken, refreshExpiresAt);
+    return res.status(200).json({ accessToken });
+  } catch (error) {
+    if (error instanceof UnauthorizedError) {
+      clearRefreshCookie(res);
+    }
+    throw error;
+  }
+};
+
+export const logoutController = async (req: Request, res: Response) => {
+  await logoutSession(getRefreshCookie(req));
+  clearRefreshCookie(res);
+  return res.status(204).end();
+};
+
+export const logoutAllController = async (req: Request, res: Response) => {
+  const { sub, actorType, organizationId } = req.auth!;
+
+  await logoutAllSessions({
+    actorId: Number(sub),
+    actorType,
+    organizationId,
+  });
+
+  clearRefreshCookie(res);
+  return res.status(204).end();
+};

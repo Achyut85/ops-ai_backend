@@ -12,6 +12,10 @@
       "model": "OrganizationAccount",
       "namespace": "public"
     },
+    "refreshSession": {
+      "model": "RefreshSession",
+      "namespace": "public"
+    },
     "ticket": {
       "model": "Ticket",
       "namespace": "public"
@@ -213,6 +217,117 @@
               "table": "organizationAccount"
             }
           },
+          "RefreshSession": {
+            "fields": {
+              "absoluteExpiresAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "actorId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "actorType": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "expiresAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "familyId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "organizationId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "revokedAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "tokenHash": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {},
+            "storage": {
+              "fields": {
+                "absoluteExpiresAt": {
+                  "column": "absoluteExpiresAt"
+                },
+                "actorId": {
+                  "column": "actorId"
+                },
+                "actorType": {
+                  "column": "actorType"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "expiresAt": {
+                  "column": "expiresAt"
+                },
+                "familyId": {
+                  "column": "familyId"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "organizationId": {
+                  "column": "organizationId"
+                },
+                "revokedAt": {
+                  "column": "revokedAt"
+                },
+                "tokenHash": {
+                  "column": "tokenHash"
+                }
+              },
+              "namespaceId": "public",
+              "table": "refreshSession"
+            }
+          },
           "Ticket": {
             "fields": {
               "assignedUserId": {
@@ -369,6 +484,20 @@
                   "kind": "scalar"
                 }
               },
+              "actorId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "actorType": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "createdAt": {
                 "nullable": false,
                 "type": {
@@ -383,10 +512,24 @@
                   "kind": "scalar"
                 }
               },
+              "newAssignedUserId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
               "newStatus": {
                 "nullable": true,
                 "type": {
                   "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "oldAssignedUserId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
                   "kind": "scalar"
                 }
               },
@@ -405,13 +548,6 @@
                 }
               },
               "ticketId": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/int4@1",
-                  "kind": "scalar"
-                }
-              },
-              "userId": {
                 "nullable": false,
                 "type": {
                   "codecId": "pg/int4@1",
@@ -449,21 +585,6 @@
                   "model": "Ticket",
                   "namespace": "public"
                 }
-              },
-              "user": {
-                "cardinality": "N:1",
-                "on": {
-                  "localFields": [
-                    "userId"
-                  ],
-                  "targetFields": [
-                    "id"
-                  ]
-                },
-                "to": {
-                  "model": "User",
-                  "namespace": "public"
-                }
               }
             },
             "storage": {
@@ -471,14 +592,26 @@
                 "action": {
                   "column": "action"
                 },
+                "actorId": {
+                  "column": "actorId"
+                },
+                "actorType": {
+                  "column": "actorType"
+                },
                 "createdAt": {
                   "column": "createdAt"
                 },
                 "id": {
                   "column": "id"
                 },
+                "newAssignedUserId": {
+                  "column": "newAssignedUserId"
+                },
                 "newStatus": {
                   "column": "newStatus"
+                },
+                "oldAssignedUserId": {
+                  "column": "oldAssignedUserId"
                 },
                 "oldStatus": {
                   "column": "oldStatus"
@@ -488,9 +621,6 @@
                 },
                 "ticketId": {
                   "column": "ticketId"
-                },
-                "userId": {
-                  "column": "userId"
                 }
               },
               "namespaceId": "public",
@@ -598,21 +728,6 @@
                 },
                 "to": {
                   "model": "Organization",
-                  "namespace": "public"
-                }
-              },
-              "ticketHistory": {
-                "cardinality": "1:N",
-                "on": {
-                  "localFields": [
-                    "id"
-                  ],
-                  "targetFields": [
-                    "userId"
-                  ]
-                },
-                "to": {
-                  "model": "TicketHistory",
                   "namespace": "public"
                 }
               }
@@ -781,6 +896,109 @@
                 }
               ]
             },
+            "refreshSession": {
+              "columns": {
+                "absoluteExpiresAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "nativeType": "timestamptz",
+                  "nullable": true
+                },
+                "actorId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "actorType": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "expiresAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "familyId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "organizationId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "revokedAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "nativeType": "timestamptz",
+                  "nullable": true
+                },
+                "tokenHash": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [],
+              "indexes": [
+                {
+                  "columns": [
+                    "actorId",
+                    "actorType",
+                    "organizationId"
+                  ],
+                  "name": "refreshSession_actorId_actorType_organizationId_idx_c76db2e8",
+                  "prefix": "refreshSession_actorId_actorType_organizationId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "expiresAt"
+                  ],
+                  "name": "refreshSession_expiresAt_idx_6b6b8c10",
+                  "prefix": "refreshSession_expiresAt_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "familyId"
+                  ],
+                  "name": "refreshSession_familyId_idx_3d03045e",
+                  "prefix": "refreshSession_familyId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "tokenHash"
+                  ]
+                }
+              ]
+            },
             "ticket": {
               "columns": {
                 "assignedUserId": {
@@ -903,6 +1121,16 @@
                   "nativeType": "text",
                   "nullable": false
                 },
+                "actorId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "actorType": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
                 "createdAt": {
                   "codecId": "pg/timestamptz-string@1",
                   "default": {
@@ -921,9 +1149,19 @@
                   "nativeType": "int4",
                   "nullable": false
                 },
+                "newAssignedUserId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": true
+                },
                 "newStatus": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
+                  "nullable": true
+                },
+                "oldAssignedUserId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
                   "nullable": true
                 },
                 "oldStatus": {
@@ -937,11 +1175,6 @@
                   "nullable": false
                 },
                 "ticketId": {
-                  "codecId": "pg/int4@1",
-                  "nativeType": "int4",
-                  "nullable": false
-                },
-                "userId": {
                   "codecId": "pg/int4@1",
                   "nativeType": "int4",
                   "nullable": false
@@ -979,22 +1212,6 @@
                     "namespaceId": "public",
                     "tableName": "ticket"
                   }
-                },
-                {
-                  "source": {
-                    "columns": [
-                      "userId"
-                    ],
-                    "namespaceId": "public",
-                    "tableName": "ticketHistory"
-                  },
-                  "target": {
-                    "columns": [
-                      "id"
-                    ],
-                    "namespaceId": "public",
-                    "tableName": "user"
-                  }
                 }
               ],
               "indexes": [
@@ -1012,14 +1229,6 @@
                   ],
                   "name": "ticketHistory_ticketId_idx_2fe526c3",
                   "prefix": "ticketHistory_ticketId_idx",
-                  "unique": false
-                },
-                {
-                  "columns": [
-                    "userId"
-                  ],
-                  "name": "ticketHistory_userId_idx_a489d58a",
-                  "prefix": "ticketHistory_userId_idx",
                   "unique": false
                 }
               ],
@@ -1139,7 +1348,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "dfd102f7ed4f78a97ca3a8bb151c8852459f02ccb73e2e611c8473ec027360c6"
+    "storageHash": "28c0a255c9949ced04ee6655f7c7a2e24aa9c7512a245060d11db0dd417a3476"
   },
   "execution": {
     "executionHash": "24941c1c510e186fb4381dc5525fa04c1df2ab75551ceb439658b166487381da",

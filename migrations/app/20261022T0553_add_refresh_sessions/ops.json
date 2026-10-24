@@ -1,0 +1,200 @@
+[
+  {
+    "id": "table.refreshSession",
+    "label": "Create table \"refreshSession\"",
+    "summary": "Creates table \"refreshSession\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "refreshSession"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"refreshSession\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"refreshSession\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"refreshSession\"",
+        "sql": "CREATE TABLE \"public\".\"refreshSession\" (\n  \"actorId\" int4 NOT NULL,\n  \"actorType\" text NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"expiresAt\" timestamptz NOT NULL,\n  \"familyId\" text NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"organizationId\" int4 NOT NULL,\n  \"revokedAt\" timestamptz,\n  \"tokenHash\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"refreshSession\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"refreshSession\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.refreshSession.refreshSession_tokenHash_key",
+    "label": "Add unique constraint on \"refreshSession\" (tokenHash)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "refreshSession_tokenHash_key",
+        "table": "refreshSession"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"refreshSession_tokenHash_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "refreshSession_tokenHash_key",
+          "public",
+          "\"public\".\"refreshSession\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"refreshSession_tokenHash_key\"",
+        "sql": "ALTER TABLE \"public\".\"refreshSession\" ADD CONSTRAINT \"refreshSession_tokenHash_key\" UNIQUE (\"tokenHash\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"refreshSession_tokenHash_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "refreshSession_tokenHash_key",
+          "public",
+          "\"public\".\"refreshSession\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.refreshSession.refreshSession_actorId_actorType_organizationId_idx_c76db2e8",
+    "label": "Create index \"refreshSession_actorId_actorType_organizationId_idx_c76db2e8\" on \"refreshSession\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "refreshSession_actorId_actorType_organizationId_idx_c76db2e8",
+        "table": "refreshSession"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"refreshSession_actorId_actorType_organizationId_idx_c76db2e8\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"refreshSession_actorId_actorType_organizationId_idx_c76db2e8\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"refreshSession_actorId_actorType_organizationId_idx_c76db2e8\"",
+        "sql": "CREATE INDEX \"refreshSession_actorId_actorType_organizationId_idx_c76db2e8\" ON \"public\".\"refreshSession\" (\"actorId\", \"actorType\", \"organizationId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"refreshSession_actorId_actorType_organizationId_idx_c76db2e8\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"refreshSession_actorId_actorType_organizationId_idx_c76db2e8\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.refreshSession.refreshSession_expiresAt_idx_6b6b8c10",
+    "label": "Create index \"refreshSession_expiresAt_idx_6b6b8c10\" on \"refreshSession\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "refreshSession_expiresAt_idx_6b6b8c10",
+        "table": "refreshSession"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"refreshSession_expiresAt_idx_6b6b8c10\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"refreshSession_expiresAt_idx_6b6b8c10\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"refreshSession_expiresAt_idx_6b6b8c10\"",
+        "sql": "CREATE INDEX \"refreshSession_expiresAt_idx_6b6b8c10\" ON \"public\".\"refreshSession\" (\"expiresAt\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"refreshSession_expiresAt_idx_6b6b8c10\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"refreshSession_expiresAt_idx_6b6b8c10\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.refreshSession.refreshSession_familyId_idx_3d03045e",
+    "label": "Create index \"refreshSession_familyId_idx_3d03045e\" on \"refreshSession\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "refreshSession_familyId_idx_3d03045e",
+        "table": "refreshSession"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"refreshSession_familyId_idx_3d03045e\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"refreshSession_familyId_idx_3d03045e\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"refreshSession_familyId_idx_3d03045e\"",
+        "sql": "CREATE INDEX \"refreshSession_familyId_idx_3d03045e\" ON \"public\".\"refreshSession\" (\"familyId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"refreshSession_familyId_idx_3d03045e\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"refreshSession_familyId_idx_3d03045e\""
+        ]
+      }
+    ]
+  }
+]

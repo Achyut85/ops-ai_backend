@@ -30,6 +30,59 @@ const registerAndLoginOrganization = async (suffix: string) => {
   };
 };
 
+describe("GET /api/v1/organizations/me", () => {
+  it("should return the organization profile for both login types", async () => {
+    const suffix = `organization_profile_${Date.now()}`;
+    const { accessToken, organizationId } =
+      await registerAndLoginOrganization(suffix);
+
+    const organizationResponse = await request(app)
+      .get("/api/v1/organizations/me")
+      .set("Authorization", `Bearer ${accessToken}`);
+
+    expect(organizationResponse.status).toBe(200);
+    expect(organizationResponse.body).toMatchObject({
+      id: organizationId,
+      name: suffix,
+    });
+    expect(organizationResponse.body).not.toHaveProperty("users");
+    expect(organizationResponse.body).not.toHaveProperty("tickets");
+
+    const username = uniqueUsername("organization_profile_user");
+    await createNewUser(organizationId, {
+      username,
+      password: "Password123",
+    });
+
+    const userLoginResponse = await request(app)
+      .post("/api/v1/auth/user/login")
+      .send({
+        organizationId,
+        username,
+        password: "Password123",
+      });
+
+    expect(userLoginResponse.status).toBe(200);
+
+    const userResponse = await request(app)
+      .get("/api/v1/organizations/me")
+      .set("Authorization", `Bearer ${userLoginResponse.body.accessToken}`);
+
+    expect(userResponse.status).toBe(200);
+    expect(userResponse.body).toMatchObject({
+      id: organizationId,
+      name: suffix,
+    });
+  });
+
+  it("should require authentication", async () => {
+    const response = await request(app).get("/api/v1/organizations/me");
+
+    expect(response.status).toBe(401);
+    expect(response.body.message).toBe("Authentication required");
+  });
+});
+
 describe("POST /api/v1/auth/register", () => {
   it("should register an organization and account", async () => {
     const email = `owner-${Date.now()}@test.com`;

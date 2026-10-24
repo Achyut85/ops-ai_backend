@@ -1,4 +1,5 @@
 import type { CreateTicketInput , TicketStatus} from "../schemas/ticket.schema.js";
+import type { ActorType } from "./auth.types.js";
 
 
 export type CreateTicketRepositoryInput = CreateTicketInput & {
@@ -21,11 +22,14 @@ export type TicketHistoryAction =
   | "DELETED";
 
 
-  export type CreateTicketHistoryInput = {
+export type CreateTicketHistoryInput = {
   organizationId: number;
   ticketId: number;
-  userId: number;
+  actorId: number;
+  actorType: ActorType;
   action: TicketHistoryAction;
   oldStatus?: TicketStatus;
   newStatus?: TicketStatus;
+  oldAssignedUserId?: number | null;
+  newAssignedUserId?: number | null;
 };

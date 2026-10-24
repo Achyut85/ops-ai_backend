@@ -8,3 +8,9 @@ export interface AccessTokenPayload extends JwtPayload {
   organizationId: number;
   actorType: ActorType;
 }
+
+export interface RefreshSessionIdentity {
+  actorId: number;
+  actorType: ActorType;
+  organizationId: number;
+}

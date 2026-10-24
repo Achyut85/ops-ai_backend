@@ -1,0 +1,44 @@
+[
+  {
+    "id": "column.public.refreshSession.absoluteExpiresAt",
+    "label": "Add column \"absoluteExpiresAt\" to \"refreshSession\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "absoluteExpiresAt",
+        "table": "refreshSession"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"absoluteExpiresAt\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "refreshSession",
+          "absoluteExpiresAt"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"absoluteExpiresAt\"",
+        "sql": "ALTER TABLE \"public\".\"refreshSession\" ADD COLUMN \"absoluteExpiresAt\" timestamptz"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"absoluteExpiresAt\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "refreshSession",
+          "absoluteExpiresAt"
+        ]
+      }
+    ]
+  }
+]

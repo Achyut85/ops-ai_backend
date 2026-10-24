@@ -83,7 +83,7 @@ Creates an organization and its owner account. Email addresses are normalized to
 }
 ```
 
-Returns an access token and account details. Organization account tokens have `actorType: "ORGANIZATION_ACCOUNT"` and expire after 15 minutes.
+Returns a 15-minute access token and account details. The refresh token is stored in an HttpOnly cookie, not returned in JSON.
 
 #### Log in as an organization user
 
@@ -97,13 +97,37 @@ Returns an access token and account details. Organization account tokens have `a
 }
 ```
 
-Returns an access token and user details. User accounts must have `ACTIVE` status. User tokens have `actorType: "USER"` and expire after 15 minutes.
+Returns a 15-minute access token and user details. The refresh token is stored in an HttpOnly cookie, not returned in JSON. User accounts must have `ACTIVE` status.
+
+#### Refresh an access token
+
+`POST /auth/refresh`
+
+Send the refresh cookie with the request. On browser `fetch`, use `credentials: "include"`. The endpoint rotates the refresh token and returns a new access token; each refresh token can be used only once. Reuse of an old token revokes that login session family.
+
+#### Log out
+
+`POST /auth/logout` revokes the login session associated with the refresh cookie and clears the cookie.
+
+`POST /auth/logout-all` requires a bearer access token, revokes all refresh sessions for that account, and clears the current browser cookie. Existing access tokens remain valid until their 15-minute expiry.
+
+Refresh sessions have a 30-day sliding idle expiry and a 90-day absolute maximum age from login. Each rotation extends the idle expiry but never the absolute expiry; after 90 days, the user must log in again. Only SHA-256 hashes of opaque refresh tokens are stored in the database.
+
+For browser deployments, configure `COOKIE_SECURE=true` in production. `COOKIE_SAME_SITE` defaults to `lax`; use `none` with `COOKIE_SECURE=true` only when the frontend and API are cross-site. Set `CORS_ORIGINS` to a comma-separated list of exact frontend origins for cross-origin browser requests. The auth routes allow credentials only for the same origin or configured origins.
 
 Use a returned token with the standard header when calling routes that are wired to authentication middleware:
 
 ```http
 Authorization: Bearer <access-token>
 ```
+
+### Organizations
+
+| Method | Route | Description |
+| --- | --- | --- |
+| `GET` | `/organizations/me` | Get the organization profile for the authenticated user or organization account. |
+
+This endpoint requires a bearer access token. It identifies the organization from the token; clients do not send an organization ID.
 
 ### Users
 
@@ -132,15 +156,19 @@ New users are always created with role `TICKET_HANDLER` and status `ACTIVE`. Cli
 
 ### Tickets
 
+All ticket endpoints require a valid bearer access token. Ticket data is scoped to the organization in that token. Organization accounts manage tickets; users can access only tickets assigned to them.
+
 | Method | Route | Description |
 | --- | --- | --- |
-| `GET` | `/tickets` | List non-deleted tickets. |
-| `GET` | `/tickets?status=OPEN&assignedUserId=1` | Filter tickets by status or assignee. |
-| `GET` | `/tickets/:id` | Get a non-deleted ticket by ID. |
-| `POST` | `/tickets` | Create a ticket. |
-| `PATCH` | `/tickets/:id` | Change a ticket's status. |
-| `GET` | `/tickets/:id/history` | Get ticket audit history. |
-| `DELETE` | `/tickets/:id` | Soft-delete a ticket. |
+| `GET` | `/tickets` | Organization account: list non-deleted tickets. |
+| `GET` | `/tickets?status=OPEN&assignedUserId=1` | Organization account: filter tickets by status or assignee. |
+| `GET` | `/tickets/me` | User: list tickets assigned to the authenticated user. |
+| `GET` | `/tickets/:id` | Organization account: get any ticket in its organization; user: get an assigned ticket. |
+| `POST` | `/tickets` | Organization account: create and optionally assign a ticket. |
+| `PATCH` | `/tickets/:id/assignment` | Organization account: assign or reassign a ticket; send `{"assignedUserId": 1}` or `{"assignedUserId": null}` to unassign. |
+| `PATCH` | `/tickets/:id` | User: change status on a ticket assigned to them. |
+| `GET` | `/tickets/:id/history` | Organization account: get history; user: get history for an assigned ticket. |
+| `DELETE` | `/tickets/:id` | Organization account: soft-delete a ticket. |
 
 Create a ticket:
 
@@ -153,7 +181,7 @@ Create a ticket:
 }
 ```
 
-Supported ticket statuses are `OPEN`, `IN_PROGRESS`, and `RESOLVED`. Ticket creation, status changes, and deletion write entries to `TicketHistory`. Deleted tickets remain in the database with `deletedAt` set and are excluded from normal ticket queries.
+Supported ticket statuses are `OPEN`, `IN_PROGRESS`, and `RESOLVED`. Ticket creation, status changes, assignment changes, and deletion write entries to `TicketHistory`. Assignment history stores `oldAssignedUserId` and `newAssignedUserId` (nullable) so assignment, reassignment, unassignment, and initial assignment can be audited. Deleted tickets remain in the database with `deletedAt` set and are excluded from normal ticket queries.
 
 ## Data model
 
@@ -185,9 +213,7 @@ src/
   tests/         API and password tests
 ```
 
-## Current status
+## Notes
 
-- Authentication and JWT verification are implemented and enforced on the user routes under `/users`.
-- Ticket routes are still not protected by `authenticate` middleware and currently use placeholder organization/user values (`1`) in the controller layer.
-- User-related controllers already read `req.auth` for organization scope and current-user identity, but the ticket flow still needs to be migrated to the authenticated actor context before this is production-ready.
+- Ticket authorization uses the authenticated actor and organization from the access token.
 - Integration tests run against the configured database; for a safer workflow, use a dedicated test database so test records do not mix with development or production data.
