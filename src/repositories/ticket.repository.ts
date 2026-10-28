@@ -7,6 +7,7 @@ import type {
 
 import type {
   TicketStatus,
+  TicketPaginationQuery,
 } from "../schemas/ticket.schema.js";
 
 type TransactionClient =
@@ -17,8 +18,9 @@ export const findTickets = async (
   organizationId: number,
   assignedUserId?: number,
   status?: TicketStatus,
+  pagination: TicketPaginationQuery = { page: 1, limit: 20 },
 ) => {
-  return db.orm.public.Ticket
+  const tickets = db.orm.public.Ticket
     .where({
       organizationId,
       deletedAt: null,
@@ -28,15 +30,40 @@ export const findTickets = async (
       ...(status !== undefined && {
         status,
       }),
-    })
-    .all();
+    });
+
+  const [data, totals] = await Promise.all([
+    tickets
+      .orderBy([
+        (ticket) => ticket.createdAt.desc(),
+        (ticket) => ticket.id.desc(),
+      ])
+      .limit(pagination.limit)
+      .offset((pagination.page - 1) * pagination.limit)
+      .all(),
+    tickets.aggregate((aggregate) => ({
+      total: aggregate.count(),
+    })),
+  ]);
+  const total = totals.total;
+
+  return {
+    data,
+    pagination: {
+      page: pagination.page,
+      limit: pagination.limit,
+      total,
+      totalPages: Math.ceil(total / pagination.limit),
+    },
+  };
 };
 
 export const findTicketsAssignedToUser = async (
   organizationId: number,
   userId: number,
+  pagination: TicketPaginationQuery,
 ) => {
-  return findTickets(organizationId, userId);
+  return findTickets(organizationId, userId, undefined, pagination);
 };
 
 

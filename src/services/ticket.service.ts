@@ -20,6 +20,7 @@ import {
   ticketStatusSchema,
   type TicketStatus,
   type CreateTicketInput,
+  type TicketPaginationQuery,
 } from "../schemas/ticket.schema.js";
 
 import { NotFoundError } from "../errors/not-found.error.js";
@@ -33,19 +34,22 @@ export const getTickets = async (
   organizationId: number,
   assignedUserId?: number,
   status?: TicketStatus,
+  pagination?: TicketPaginationQuery,
 ) => {
   return findTickets(
     organizationId,
     assignedUserId,
     status,
+    pagination,
   );
 };
 
 export const getTicketsAssignedToUser = async (
   organizationId: number,
   userId: number,
+  pagination: TicketPaginationQuery,
 ) => {
-  return findTicketsAssignedToUser(organizationId, userId);
+  return findTicketsAssignedToUser(organizationId, userId, pagination);
 };
 
 

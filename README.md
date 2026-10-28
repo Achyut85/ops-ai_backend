@@ -158,17 +158,33 @@ New users are always created with role `TICKET_HANDLER` and status `ACTIVE`. Cli
 
 All ticket endpoints require a valid bearer access token. Ticket data is scoped to the organization in that token. Organization accounts manage tickets; users can access only tickets assigned to them.
 
+Ticket collection endpoints accept `page` (default `1`) and `limit` (default `20`, maximum `100`). Results are ordered newest first, with ticket ID as a tie-breaker. Responses contain `data` and `pagination` metadata (`page`, `limit`, `total`, and `totalPages`).
+
 | Method | Route | Description |
 | --- | --- | --- |
-| `GET` | `/tickets` | Organization account: list non-deleted tickets. |
-| `GET` | `/tickets?status=OPEN&assignedUserId=1` | Organization account: filter tickets by status or assignee. |
-| `GET` | `/tickets/me` | User: list tickets assigned to the authenticated user. |
+| `GET` | `/tickets?page=1&limit=20` | Organization account: list a page of non-deleted tickets. |
+| `GET` | `/tickets?status=OPEN&assignedUserId=1&page=1&limit=20` | Organization account: filter and paginate tickets by status or assignee. |
+| `GET` | `/tickets/me?page=1&limit=20` | User: list a page of tickets assigned to them. |
 | `GET` | `/tickets/:id` | Organization account: get any ticket in its organization; user: get an assigned ticket. |
 | `POST` | `/tickets` | Organization account: create and optionally assign a ticket. |
 | `PATCH` | `/tickets/:id/assignment` | Organization account: assign or reassign a ticket; send `{"assignedUserId": 1}` or `{"assignedUserId": null}` to unassign. |
 | `PATCH` | `/tickets/:id` | User: change status on a ticket assigned to them. |
 | `GET` | `/tickets/:id/history` | Organization account: get history; user: get history for an assigned ticket. |
 | `DELETE` | `/tickets/:id` | Organization account: soft-delete a ticket. |
+
+Paginated collection response:
+
+```json
+{
+  "data": [],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 0,
+    "totalPages": 0
+  }
+}
+```
 
 Create a ticket:
 

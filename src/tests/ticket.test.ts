@@ -108,13 +108,13 @@ describe("Ticket API", () => {
 
     const response = await userApi.get("/api/v1/tickets/me");
     expect(response.status).toBe(200);
-    expect(Array.isArray(response.body)).toBe(true);
-    expect(response.body.every(
+    expect(Array.isArray(response.body.data)).toBe(true);
+    expect(response.body.data.every(
       (ticket: { assignedUserId: number | null; organizationId: number }) =>
         ticket.assignedUserId === assignedUserId &&
         ticket.organizationId === organizationId,
     )).toBe(true);
-    expect(response.body.some(
+    expect(response.body.data.some(
       (ticket: { id: number }) => ticket.id === createResponse.body.id,
     )).toBe(false);
 
@@ -151,7 +151,7 @@ describe("Ticket API", () => {
     );
 
     const userTickets = await userApi.get("/api/v1/tickets/me");
-    expect(userTickets.body.some(
+    expect(userTickets.body.data.some(
       (ticket: { id: number }) => ticket.id === ticketId,
     )).toBe(true);
 
@@ -204,9 +204,9 @@ describe("Ticket API", () => {
       .get("/api/v1/tickets");
 
     expect(response.status).toBe(200);
-    expect(Array.isArray(response.body)).toBe(true);
+    expect(Array.isArray(response.body.data)).toBe(true);
 
-    for (const ticket of response.body) {
+    for (const ticket of response.body.data) {
       expect(ticket.deletedAt).toBeNull();
       expect(ticket.organizationId).toBe(organizationId);
     }
@@ -222,9 +222,9 @@ describe("Ticket API", () => {
       });
 
     expect(response.status).toBe(200);
-    expect(Array.isArray(response.body)).toBe(true);
+    expect(Array.isArray(response.body.data)).toBe(true);
 
-    for (const ticket of response.body) {
+    for (const ticket of response.body.data) {
       expect(ticket.status).toBe("OPEN");
     }
   });
@@ -239,11 +239,107 @@ describe("Ticket API", () => {
       });
 
     expect(response.status).toBe(200);
-    expect(Array.isArray(response.body)).toBe(true);
+    expect(Array.isArray(response.body.data)).toBe(true);
 
-    for (const ticket of response.body) {
+    for (const ticket of response.body.data) {
       expect(ticket.assignedUserId).toBe(assignedUserId);
     }
+  });
+
+  it("should paginate filtered organization tickets in stable order", async () => {
+    const paginationUser = await createNewUser(organizationId, {
+      username: `pagination_${Date.now()}`,
+      password: "TestPassword123!",
+      name: "Pagination User",
+    });
+    const createdIds: number[] = [];
+
+    for (const title of ["Page ticket 1", "Page ticket 2", "Page ticket 3"]) {
+      const response = await api
+        .post("/api/v1/tickets")
+        .send({
+          title,
+          status: "IN_PROGRESS",
+          assignedUserId: paginationUser.id,
+        });
+      expect(response.status).toBe(201);
+      createdIds.push(response.body.id);
+    }
+
+    const page1 = await api
+      .get("/api/v1/tickets")
+      .query({
+        assignedUserId: paginationUser.id,
+        status: "IN_PROGRESS",
+        page: 1,
+        limit: 2,
+      });
+    const page2 = await api
+      .get("/api/v1/tickets")
+      .query({
+        assignedUserId: paginationUser.id,
+        status: "IN_PROGRESS",
+        page: 2,
+        limit: 2,
+      });
+
+    expect(page1.status).toBe(200);
+    expect(page1.body.data).toHaveLength(2);
+    expect(page1.body.pagination).toEqual({
+      page: 1,
+      limit: 2,
+      total: 3,
+      totalPages: 2,
+    });
+    expect(page2.status).toBe(200);
+    expect(page2.body.data).toHaveLength(1);
+    expect(page2.body.pagination).toEqual({
+      page: 2,
+      limit: 2,
+      total: 3,
+      totalPages: 2,
+    });
+    expect([
+      ...page1.body.data.map((ticket: { id: number }) => ticket.id),
+      ...page2.body.data.map((ticket: { id: number }) => ticket.id),
+    ]).toEqual(createdIds.reverse());
+  });
+
+  it("should paginate the current user's tickets and validate pagination bounds", async () => {
+    const createResponse = await api
+      .post("/api/v1/tickets")
+      .send({
+        title: "User pagination ticket",
+        status: "OPEN",
+        assignedUserId,
+      });
+    expect(createResponse.status).toBe(201);
+
+    const response = await userApi
+      .get("/api/v1/tickets/me")
+      .query({ page: 1, limit: 1 });
+
+    expect(response.status).toBe(200);
+    expect(response.body.data).toHaveLength(1);
+    expect(response.body.pagination.page).toBe(1);
+    expect(response.body.pagination.limit).toBe(1);
+    expect(response.body.pagination.total).toBeGreaterThan(0);
+    expect(response.body.pagination.totalPages).toBe(
+      response.body.pagination.total,
+    );
+    expect(response.body.data[0].assignedUserId).toBe(assignedUserId);
+
+    const invalidPage = await api
+      .get("/api/v1/tickets")
+      .query({ page: 0 });
+    expect(invalidPage.status).toBe(400);
+    expect(invalidPage.body.message).toContain("Page must be greater than 0");
+
+    const invalidLimit = await userApi
+      .get("/api/v1/tickets/me")
+      .query({ limit: 101 });
+    expect(invalidLimit.status).toBe(400);
+    expect(invalidLimit.body.message).toContain("Limit cannot exceed 100");
   });
 
 

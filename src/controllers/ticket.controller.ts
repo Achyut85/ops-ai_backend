@@ -18,6 +18,7 @@ import {
   updateTicketAssignmentSchema,
   updateTicketSchema,
   ticketQuerySchema,
+  ticketPaginationQuerySchema,
 } from "../schemas/ticket.schema.js";
 
 export const getMyTicketsController = async (
@@ -25,9 +26,18 @@ export const getMyTicketsController = async (
   res: Response,
 ) => {
   const { organizationId, sub } = req.auth!;
+  const parsed = ticketPaginationQuerySchema.safeParse(req.query);
+
+  if (!parsed.success) {
+    throw new ValidationError(
+      parsed.error.issues.map((issue) => issue.message).join(", "),
+    );
+  }
+
   const tickets = await getTicketsAssignedToUser(
     organizationId,
     Number(sub),
+    parsed.data,
   );
 
   return res.json(tickets);
@@ -56,6 +66,7 @@ export const getTicketsController = async (
     organizationId,
     parsed.data.assignedUserId,
     parsed.data.status,
+    parsed.data,
   );
 
   return res.json(tickets);
